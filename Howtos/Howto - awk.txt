@@ -1,0 +1,433 @@
+
+********************************************************************************
+To sum & average columns values
+ex - data like this
+17698/1:        25.1320  0.0002 write(23, " H\0\b\0 R\0\0\n\002\0\n".., 2048)   = 2048
+17698/1:        25.1493  0.0137 write(22, "\0 !\0\006\0\0\0\0\003AC".., 33)     = 33
+17698/8:        25.4999  0.0002 pwrite(16, "AA87 |\0 2  \0\0D3 B92\v".., 16871, 8161238) = 16871
+17698/1:        25.5007  0.0060 write(28, "\0\0\0\0\0\0\0\0\0\0\0\0".., 4096)   = 4096
+17698/1:        25.5044  0.0037 write(28, "\0\0\0\0\0\0\0\0\0\0\0\0".., 4096)   = 4096
+17698/1:        25.5059  0.0015 write(28, "1C\0\0\09015 v\0 "\0\0\0".., 4096)   = 4096
+
+
+
+sum and average all write call
+
+grep -i " write(" normal.trc| awk '{print $4, $3}'|
+	sort|
+	awk '
+	BEGIN 	{
+	 	prev=0;
+		sum=0;
+		count=1
+		}
+	{
+		if ($1==prev) {
+			sum+=$2;
+			count+=1
+			}
+		else 	{
+			print prev, sum/count, sum, count; 
+			prev=$1;
+			sum=$2;
+			count=1
+			} 
+	}
+	END 	{
+		print prev, sum/count, sum, count 
+		}
+	'
+
+********************************************************************************
+
+To sum & average columns values
+ex - data like this
+17698/2:         0.0199  0.0199  0.0001 lwp_park(0xFFFFFFFF731FBB90, 0)                 Err#62 ETIME
+17698/10:        0.0591  0.0591  0.0001 lwp_park(0xFFFFFFFF716FAC10, 0)                 Err#62 ETIME
+17698/2:         0.0846  0.0647  0.0001 lwp_park(0xFFFFFFFF731FBB90, 0)                 Err#62 ETIME
+
+
+
+sum and average all write call
+
+grep -i " write(" x.trc| awk '{print $5, $4}'|
+	sort|
+	awk '
+	BEGIN 	{
+	 	prev=0;
+		sum=0;
+		count=1
+		}
+	{
+		if ($1==prev) {
+			sum+=$2;
+			count+=1
+			}
+		else 	{
+			print prev, sum/count, sum, count; 
+			prev=$1;
+			sum=$2;
+			count=1
+			} 
+	}
+	END 	{
+		print prev, sum/count, sum, count 
+		}
+	'
+
+********************************************************************************
+To sum up a column value if a particular field has same value as a previous row 
+for ex - sum up all "buffer busy waits" in an oracle trace file according to object ID
+
+You need to modify #6 and buffer busy waits as per your requirement
+
+grep -i "WAIT #6: nam='buffer busy waits" aisgsm1_ora_22987.trc| awk '{print $11, $7}'|
+	sort|
+	awk '
+	BEGIN 	{
+	 	prev=0;
+		sum=0
+		}
+	{
+		if ($1==prev) {
+			sum+=$2 
+			}
+		else 	{
+			print prev, sum; 
+			prev=$1; 
+			sum=$2
+			} 
+	}
+	END 	{
+		print prev, sum
+		}
+	'
+
+********************************************************************************
+To sum up a column value if a particular field has same value as a previous row 
+
+for ex - sum up all "buffer busy waits" in an oracle trace file according to object ID
+
+grep -i "WAIT #6: nam='buffer busy waits" aisgsm1_ora_22987.trc| awk '{print $11, $7}'|
+	sort|
+	awk '
+	BEGIN 	{
+	 	prev=0;
+		sum=1
+		}
+	{
+		if ($1==prev) {
+			sum+=$2 
+			}
+		else 	{
+			print prev, sum; 
+			prev=$1; 
+			sum=$2
+			} 
+	}
+	END 	{
+		print prev, sum
+		}
+	'
+
+To count similar occurences
+
+awk 	'/Consistent read started/ {print $NF}' aceprod1_p000_16468.trc|
+	sort|
+	awk '
+	BEGIN   {
+        	prev=999999;
+		count=1
+	}
+	{
+		if ($1==prev) 
+		{
+			count+=1
+		}
+		else
+		{
+			print count, prev;
+			prev=$1;
+			count=1
+		}
+	}
+	END {
+		print count, prev;
+	}
+	'|
+sort -n
+
+to sum and count similar occurences
+
+
+
+grep -i "WAIT #6: nam='buffer busy waits" aisgsm1_ora_22987.trc| awk '{print $11, $7}'|
+	sort|
+	awk '
+	BEGIN 	{
+	 	prev=0;
+		sum=1;
+		count=1
+		}
+	{
+		if ($1==prev) {
+			count+=1
+			sum+=$2 
+			}
+		else 	{
+			print prev, count, sum; 
+			prev=$1; 
+			sum=$2;
+			count=1
+			} 
+	}
+	END 	{
+		print prev, count, sum
+		}
+	'
+
+
+cat alert_ISQ.log|awk   '
+        BEGIN {
+                pri=0
+        }
+        {
+        if ( pri==1 )
+                {
+                print;
+		pri=0
+                }
+        if ( tolower($0) ~ /flashback/ )
+                {
+                pri=1;
+                print
+                }
+        }
+        '
+
+to see all lines with the word flashback and one line after that 
+
+cat alert_ISQ.log|awk   '
+        BEGIN {
+                pri=0
+        }
+        {
+        if ( pri==1 )
+                {
+                print;
+		pri=0
+                }
+        if ( tolower($0) ~ /flashback/ )
+                {
+                pri=1;
+                print
+                }
+        }
+        '
+
+to see all lines with the word flashback and the date line ending with 2015 after that
+
+
+cat alert_ISQ.log|awk   '
+        BEGIN {
+                pri=0
+        }
+        {
+        if ( tolower($0) ~ /flashback/ )
+                {
+                pri=1;
+                print
+                }
+        if ( pri==1 && tolower($0) ~ /2015$/ )
+                {
+                print;
+		pri=0
+                }
+        }
+        '
+
+Simplify Index Tree dump
+
+cat tracefile|awk         'BEGIN {
+                last_leaf=0;
+		first_leaf=0;
+		prev_line="";
+        }
+        {
+        	if ( tolower($0) ~ /branch/ )
+                {
+			if ( last_leaf==1 ) 
+			{
+				print prev_line;
+				first_leaf=1
+			}
+			last_leaf=0;
+			first_leaf=1;
+                	print;
+                }
+        	if ( tolower($0) ~ /leaf/ )
+		{
+			last_leaf=1;
+			if ( first_leaf==1 ) 
+			{
+				print;
+				last_leaf=0
+			}
+			prev_line=$0;
+			first_leaf=0;
+		}
+        }
+        '
+
+To see how many lines between a pattern
+
+grep -i "EXEC #" ISQ_ora_9993.trc|awk   '
+        BEGIN {
+                count=0
+        }
+        {
+        if  ($0 ~ /EXEC #11529215044981464672/ )
+                {
+                print count;
+		print;
+		count=0
+                }
+        else 
+                {
+                count+=1
+                }
+        }
+        '
+
+***************************************************************
+Group CPU time by process command
+
+
+UNIX95=1  ps -e -o time,comm|
+	awk '
+	BEGIN	{
+		secs=0
+		}
+	{
+		split($1,a,":");
+		secs=a[1]*60*60+a[2]*60+a[3];
+		print $2,secs;
+		secs=0
+	}
+	'|
+	sort|
+	awk '
+	BEGIN 	{
+	 	prev=0;
+		sum=0
+		}
+	{
+		if ($1==prev) {
+			sum+=$2 
+			}
+		else 	{
+			print prev, sum; 
+			prev=$1; 
+			sum=$2
+			} 
+	}
+	END 	{
+		print prev, sum
+		}
+	'|
+sort -n -k 2
+
+********************************************************************************
+
+How to see Executions and Buffer Gets per Exec from AWR report
+for a particular sql -
+
+sql_id - 4af05rfq2fvzk in example below
+
+
+find . -name \*html  -exec cat {} \; |
+awk '/SQL ordered by Gets/,/SQL ordered by Reads/'|
+awk -F ">" '/4af05rfq2fvzk/ {gsub("</td","",$5);gsub("</td","",$7);print $5,$7}'   
+
+-- The same as above with snap timings
+
+find . -name \*html  -exec cat {} \; |
+awk '/Begin Snap:/ {print}; /End Snap:/ {print}; /SQL ordered by Gets/,/SQL ordered by Reads/ {print}'|
+awk -F ">" '/Begin Snap:/ {gsub("</td","",$7);print "Begin Snap - ",$7}; /End Snap:/ {gsub("</td","",$7);print "End Snap - ",$7};/4af05rfq2fvzk/ {gsub("</td","",$5);gsub("</td","",$7);print $5,$7;print "-----"}'   
+
+********************************************************************************
+How to use shell variables in AWK
+mount -v|awk -v TMP="$TMP_LOCATION" '{if ($3==TMP) print}'
+
+********************************************************************************
+Print "Warning: log write elapsed time" lines with date from lgwr trace
+
+
+awk '/ 2018/ {timeline=$0} /Warning: log write elapsed time/ {print timeline; print} ' /db/oracle/diag/rdbms/prd01a/PRD01/trace/PRD01_lgwr_18087.trc
+
+
+********************************************************************************
+
+how to get records processed by date - Goldengate
+
+2018-09-30 00:04:14 81959307
+2018-09-30 00:09:16 81962217
+
+2018-10-01 00:04:23 84775926
+2018-10-01 00:09:24 84778388
+
+
+grep " records processed as of " PR1R*.rpt|grep  " 00:0"|awk '{print $7, $8, $2}'|sort -n|
+	awk '
+	BEGIN   {
+        	prevdate=999999;
+		prevval=0
+	}
+	{
+		if ($1!=prevdate) 
+		{
+			print prevdate, $3-prevval;
+			prevdate=$1;
+			prevval=$3
+		}
+	}
+	END {
+		print;
+	}
+	'
+
+2018-09-30 2816619
+2018-10-01 6168054
+
+
+
+********************************************************************************
+To get data from goldengate trail file for a specific table
+********************************************************************************
+
+ls /db/c7/ogg/trail/di*|while read file 
+do
+echo "open $file" >> /tmp/pc7ds.oby
+echo "count detail" >> /tmp/pc7ds.oby
+done
+
+cat /tmp/pc7ds.oby|logdump >>/tmp/1.txt
+
+cat /tmp/1.txt|awk '
+BEGIN {
+  inprint=0
+}
+{
+  if ( $0 ~ /SCH_MST.INVSVC_MSG_DETAIL/ ){
+    inprint=1;
+  }
+  if ( inprint == 1) {
+    print
+  }
+  if ( $0 ~ /^$/) {
+      inprint=0
+  }
+}'
+
+
+

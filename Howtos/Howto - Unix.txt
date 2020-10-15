@@ -1,0 +1,313 @@
+
+********************************************************************************
+How to change a process to realtime class - Solaris
+
+priocntl -s -c RT -i pid 1001  -- changes process 1001 to RT class
+priocntl -s -c RT -i uid 500 -- changes priority of all processes belonging to userid 500 to RT class
+
+********************************************************************************
+Get lines between 2 patterns
+awk '/BIND/, /EXEC/' czdev_ora_21450.trc
+********************************************************************************
+Get lines between 2 patterns
+awk '/BIND/, /EXEC/' czdev_ora_21450.trc
+awk '$1 == "MARKER_END", $1 == "MARKER_START"' logfile
+********************************************************************************
+Get lines between 2 patterns that repeat multiple times
+awk 'BEGIN {display=0} /BINDS #153/ {display=1} /EXEC #153/  {display=0} display==1 {print} ' bpnatprd_ora_11399.trc
+********************************************************************************
+Get count of lines having the same pattern
+grep -i read dwops_ora_19689.trc|grep -i "#6"|awk '{print $12}'|sort|awk 'BEGIN {count=0;check=0} {if (check == $1) {count++ } else {print check,count; count=0;check=$1}}'
+********************************************************************************
+To move files using ssh
+1) tar cvf - x|ssh sundb3-v880 'cd ./z;tar xvf -'
+2) gzip -c x|ssh db-dw2-6001.iad6.amazon.com 'gunzip - >/home/kadiyala/y'
+3) nohup `tar cvf - java|ssh sgpatch@sophpadb01 'cd /sgpatch/sgpatchcomn; tar xvf -'`
+
+********************************************************************************
+To sumup file sizes 
+du -sk *gz|awk '{sum+=$1} END {print sum}'
+
+example 2 - to sum up all file sizes that have the name "sri" and are generated on oct 16
+ls -l|grep "Oct 16"|grep -i sri|awk '{print $9}'|xargs -I {} du -sk {}|awk '{sum+=$1} END {print sum}'
+
+
+
+********************************************************************************
+To send multiple attachments by mail
+(uuencode $logfile_cpu $logfile_cpu;uuencode $logfile_buffer $logfile_buffer) |mailx -s "sar reports for $day from $server" sas.it.oracledba@sungard.com
+********************************************************************************
+To check mail server accessibility
+http://www.linuxhomenetworking.com/wiki/index.php/Quick_HOWTO_:_Ch21_:_Configuring_Linux_Mail_Servers
+
+telnet <mailserver> <mailport>
+
+telnet 172.17.14.43 25
+
+helo <your domain>
+helo tatatel.co.in
+
+MAIL FROM:shivashankar.gali@tatatel.co.in
+
+RCPT TO: srivenu.kadiyala@tatatel.co.in
+
+DATA
+
+Subject: Test Message
+
+QUIT
+
+
+********************************************************************************
+
+core dump a process
+gcore -o output pid 
+********************************************************************************
+How to see number of open TCP connections
+netstat -s|grep -i tcpCurrEstab
+********************************************************************************
+how to remove a file with strage characters
+rm -- 'name'
+
+ex - remove a file whose name is '-'
+rm -- '-'
+
+********************************************************************************
+How to set up passwordless SSH
+
+example servera to serverb
+
+on servera run 
+/usr/bin/ssh-keygen
+/usr/bin/ssh-keygen -t rsa
+/usr/bin/ssh-keygen -t rsa1
+
+on serverb copy the identity.pub from servera ~home/.ssh directory into authorized_keys file in ~home/.ssh dir
+on serverb copy the id_rsa.pub from servera ~home/.ssh directory into authorized_keys2 file in ~home/.ssh dir
+
+you can also copy the identity.pub and id_rsa.pub on all servers like this
+first copy them to node 1
+ssh applmgr@node2 cat /home/applmgr/.ssh/identity.pub >>authorized_keys
+ssh applmgr@node2 cat /home/applmgr/.ssh/id_rsa.pub >>authorized_keys2
+ssh applmgr@node3 cat /home/applmgr/.ssh/identity.pub >>authorized_keys
+ssh applmgr@node3 cat /home/applmgr/.ssh/id_rsa.pub >>authorized_keys2
+
+Then copy them to all servers
+scp authorized_keys applmgr@ncrm4-apps-pro2:/home/applmgr/.ssh/authorized_keys 
+scp authorized_keys2 applmgr@ncrm4-apps-pro2:/home/applmgr/.ssh/authorized_keys2 
+
+scp authorized_keys applmgr@ncrm4-apps-pro3:/home/applmgr/.ssh/authorized_keys 
+scp authorized_keys2 applmgr@ncrm4-apps-pro3:/home/applmgr/.ssh/authorized_keys2 
+
+********************************************************************************
+
+How to start screen
+screen -mS sql.tdw-1 -t sql.tdw-1 /opt/app/oracle/product/10.2.0.2/A01dbR/bin/sqlplus kadiyala_dba
+
+
+********************************************************************************
+How to hide what you are typing on the screen
+
+stty –echo
+read PASSWORD
+stty echo
+
+then use the $PASSWORD variable ….
+
+ this is one more way
+
+ mkdir -p /opt/app/oracle/admin/swlb1na/orapw && stty -echo && 
+    echo -n "sys password: " && read SYSPASS &&  
+    orapwd file=/opt/app/oracle/admin/swlb1na/orapw/orapwswlb1na password=$SYSPASS ; stty sane
+
+********************************************************************************
+Troubleshoot X DISPLAY
+
+try /usr/openwin/demo/xeyes or /usr/openwin/bin/xclock.
+Get info using /usr/openwin/bin/xdpyinfo
+
+********************************************************************************
+
+How to create zero filled files
+for ex - to create a 2GB zero filled file 
+dd if=/dev/zero of=/asmdisk/disk1 bs=1024k count=2000
+
+********************************************************************************
+HP UX 
+
+trace a process
+tusc -DET -p 19360
+
+How to set XPG4 environment for ps -o to work
+export UNIX95=""
+
+to see process details
+
+ps -efl -o pid,comm,cls,pri,nice|egrep "PID|pmon"
+
+
+********************************************************************************
+to trace all
+truss -f -l -a -e -vall -tall -sall -mall -rall -wall -p 17698
+
+to trace file open
+truss -f -topen,creat,stat,access -p 17698
+
+truss -dE -p 17698
+
+truss -T - How to suspend a process at a system call 
+
+ex - truss -dD -u -w!all -T open -p 4207
+
+.............................................
+truss - how to sum times across system calls
+for single thread process
+.............................................
+
+truss -fdDE -p 14576 >/tmp/x 2>&1
+
+print " system call \t Time";awk '{print $1, $2, $3}' /tmp/x.trc|cut -d '(' -f 1 |sort -k 3 |
+awk '
+BEGIN 	{
+	 	prev=0;
+		sum=0
+		}
+	{
+		if ($3==prev) {
+			sum+=$2
+			}
+		else 	{
+			print prev, "\t",  sum; 
+			prev=$3; 
+			sum=0
+			} 
+	}
+	END 	{
+		print prev, sum
+		}
+	'|
+sort -nr -k 2
+
+.............................................
+truss - how to sum times across system calls
+for multi threaded process
+.............................................
+print " system call \t Time";awk '{print $4, $5}' /tmp/x.trc|cut -d ',' -f 1 |sort -k 2 |
+awk '
+BEGIN 	{
+	 	prev=0;
+		sum=0
+		}
+	{
+		if ($2==prev) {
+			sum+=$1
+			}
+		else 	{
+			print prev, "\t",  sum; 
+			prev=$2; 
+			sum=0
+			} 
+	}
+	END 	{
+		print prev, sum
+		}
+	'|
+sort -nr -k 2
+
+truss & pstack - How to get detailed info of a process
+
+  while :
+  do
+  truss -U /software/ora/oracle/product/10.2.0/db/bin/oracle -U :: -p 18816
+  pstack 18816
+  echo '#######################'
+  done
+
+
+*******************************
+Print pstack & pmap 1000 times
+*******************************
+
+#! /bin/ksh
+ pid=$1
+ (( cnt=1000 ))
+ while  [[ $cnt -gt 0 ]];
+  do
+        date
+        pmap -x $pid
+        pstack $pid
+        echo $cnt
+        (( cnt=cnt-1 ))
+        sleep 10
+  done
+
+pstack -F - force pstack a process
+
+
+open PIPE, "/bin/pstack @ARGV |" or echo "Cannot run /bin/pstack";
+while (<PIPE>) {
+my (@f) = split;
+my ($b, $t, $e, @rest) = split /[\s]+/, `dem $f[1]`;
+$f[1] = join ' ', @rest;
+print join (' ', @f) . "\n";
+}
+
+*******************************
+awk printf
+grep -i stopwatch SystemOut.log|sort|awk '{printf "\n"; printf "%s \t %s \t %s \t %s \t %s \t", $9, $10, $12, $13, $NF}'
+*******************************
+
+To repeat a command n times
+ex- to repeat a command 10 times
+for i in $(seq 1 10); do echo $i;done
+for i in {1..10}; do echo $i;done
+********************************************************************************
+To consume lot of cpu
+
+yes > /dev/null &
+
+********************************************************************************
+How to check a telnet port
+
+telnet USSMSD01.swift.com 7799
+
+to exit type -> ctrl 5/% key followed by ctrl c
+
+********************************************************************************
+using prex
+
+prex  -k
+
+buffer alloc 100m
+trace io
+enable io 
+ktrace on
+
+(tracing happens here)
+
+ktrace off
+
+quit
+
+tnfxtract io01.tnf
+
+tnfdump io01.tnf
+
+
+
+********************************************************************************
+To check whether all tables (or anything) in one file that is not in other file
+********************************************************************************
+
+cat /tmp/tab|while read table
+do
+  if [[ $(grep -iw $table er1bc.prm|wc -l) -lt 1 ]]
+  then
+    echo $table
+  fi
+done
+
+********************************************************************************
+scp files with key file
+
+nohup scp -i /export/home/oracle/172.19.241.158.pem /db/scffdo2/sri/data_decjanfeb/ic* root@172.19.241.158:/data/trail/data_decjanfeb &

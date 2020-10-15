@@ -1,0 +1,40 @@
+
+******************************
+How to clone a remote a remote branch, makes changes and push
+******************************
+
+clone a remote branch to local
+
+git clone --branch Remove_ENVIRONMENT_ID_from_Platform_scripts https://code.tiamat.cloud/des/airflow-dags.git
+
+Make changes to the code locally
+
+git status
+
+git add *
+
+git commit -m "Refactored Blitz Scripts"
+
+git push
+
+******************************
+How to merge a local and remote branch and push
+******************************
+
+Step 1. Fetch and check out the branch for this merge request
+
+git fetch origin
+git checkout -b "VOL-1933/DRAFT" "origin/VOL-1933/DRAFT"
+
+Step 2. Review the changes locally
+
+Step 3. Merge the branch and fix any conflicts that come up
+
+git fetch origin
+git checkout "origin/kafka-parallel"
+git merge --no-ff "VOL-1933/DRAFT"
+
+
+Step 4. Push the result of the merge to GitLab
+
+git push origin "kafka-parallel"

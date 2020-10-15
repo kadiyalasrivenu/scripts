@@ -1,0 +1,80 @@
+
+create table dba_indexes_oct5 as select * from dba_indexes;
+
+create table dba_indexes_rebuild_errors (owner varchar2(30),INDEX_NAME varchar2(30), reason varchar2(4000))
+/
+
+create table dba_indexes_rebuild (owner varchar2(30),INDEX_NAME varchar2(30), starttime date)
+/
+
+
+
+truncate table dba_indexes_rebuild
+/
+
+truncate table dba_indexes_rebuild_errors
+/
+
+
+declare
+ v_error varchar2(4000);
+ cursor c_cur is select owner,index_name from dba_indexes order by owner,index_name;
+ v_cur c_cur%rowtype;
+begin
+ for v_cur in c_cur loop
+  begin
+   insert into dba_indexes_rebuild values (v_cur.owner, v_cur.index_name, sysdate);
+   commit;
+   execute immediate 'alter index '||v_cur.owner||'.'||v_cur.index_name||' rebuild nologging compute statistics';
+  exception
+   when others then
+   v_error := SQLERRM;
+   insert into dba_indexes_rebuild_errors values(v_cur.owner, v_cur.index_name, v_error);
+   commit;
+  end;
+ end loop;
+end;
+/
+
+create table dba_indexes_oct10 as select * from dba_indexes;
+
+
+create table dba_indexes_diff nologging as 
+select 	di5.owner, di5.index_name, 
+	di5.leaf_blocks - di10.leaf_blocks blocks_diff,
+	di5.leaf_blocks blocks_start,
+       	di10.leaf_blocks blocks_end,
+	di5.blevel blevel_start,
+	di10.blevel blevel_end,
+	di5.num_rows rows_start,
+	di10.num_rows rows_end
+from 	dba_indexes_oct06 di5,
+     	dba_indexes_oct10 di10
+where 	di5.owner=di10.owner
+and 	di5.index_name=di10.index_name
+/
+
+col owner head "Owner" form a25
+col index_name head "Index Name" form a30
+col blocks_diff head "No Of|Blocks|Reduced|by Rebuild" form 9,999,999
+col blocks_start head "No Of|Blocks|Before|Rebuild" form 9,999,999
+col blocks_end head "No Of|Blocks|After|Rebuild" form 9,999,999
+col blevel_start head "BLEVEL|Before|Rebuild" form 999
+col blevel_end head "BLEVEL|After|Rebuild" form 999
+col rows_start head "No Of|ROws|Before|Rebuild" form 99,999,999,999
+col rows_end head "No Of|ROws|After|Rebuild" form 99,999,999,999
+
+select 	owner, index_name, blocks_diff,
+	blocks_start, blocks_end,
+	blevel_start, blevel_end,
+	rows_start, rows_end
+from 	dba_indexes_diff 
+order 	by blocks_diff desc, owner,index_name
+/
+
+
+col reason form a80
+col owner form a10
+select owner,index_name,REASON 
+from dba_indexes_rebuild_errors
+/

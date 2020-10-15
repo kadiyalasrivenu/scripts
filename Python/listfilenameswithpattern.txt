@@ -1,0 +1,30 @@
+*************************************
+
+import glob
+import fnmatch
+import pathlib
+import os
+
+pattern = '*.yml'
+path = 'C:/Srivenu/Work/Wotc/airflow-dags/Arena/scripts'
+
+list_of_files=[]
+yml_files=[]
+
+for root, directories, files in os.walk(path, topdown=False):
+    for name in files:
+        list_of_files.append(os.path.join(root, name))
+
+yml_files=fnmatch.filter(list_of_files, pattern)
+
+for file in yml_files:
+    print(file)
+
+*************************************
+
+import glob
+
+files=glob.glob('C:/Srivenu/Work/Wotc/airflow-dags/Arena/scripts/*/*.yml')
+for f in files:
+    print(f)
+	

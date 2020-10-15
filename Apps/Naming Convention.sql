@@ -1,0 +1,25 @@
+apps			-	app
+bugs			-	bug
+clean			-	cln
+column			-	col
+concurrent		-	con
+detail			-	det
+executable		-	exe
+failed			-	fai
+fnd			-	fnd
+histogram		-	his
+manager			-	man
+normal			-	nor
+patches			-	pat
+pending			-	pen
+products		-	prd
+profile			-	prf
+request			-	req
+request id		-	rid
+schedules		-	shd
+session			-	ses
+standby			-	std
+status			-	sta
+user			-	usr
+value			-	val
+waiting			-	wai

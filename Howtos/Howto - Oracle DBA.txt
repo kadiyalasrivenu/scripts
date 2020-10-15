@@ -1,0 +1,827 @@
+Dump datablocks
+
+ALTER SYSTEM DUMP DATAFILE 1 BLOCK 5586;
+ALTER SYSTEM DUMP DATAFILE 1 BLOCK MIN 5585 BLOCK MAX 5586;
+ALTER SYSTEM DUMP DATAFILE '/u01/oradata/MYDB/system01.dbf' BLOCK 98;
+
+*****************************************************************************
+Index tree dump
+
+SELECT object_id FROM dba_objects WHERE object_name = 'IDX_TT_EM_SN_ML_DT_N_D_T'; 
+
+ALTER SESSION SET EVENTS 'immediate trace name treedump level 5280543'; 
+
+*****************************************************************************
+Enqueues dump
+alter session set events 'immediate trace name enqueues level 3'
+*****************************************************************************
+
+Submit a dbms_job to run every 15 minutes
+exec DBMS_JOB.SUBMIT(:v_JobNum,'statspack.snap;',TRUNC(sysdate,'HH')+1/24,'SYSDATE + 1/96');
+
+To sumbit a job with different ownership
+use SYS.DBMS_IJOB
+exec sys.dbms_ijob.submit(1000,'ADMIN','ADMIN','ADMIN',SYSDATE,'SYSDATE + 60/1440',FALSE,'admin.FLUSH_SHARED_POOL_SIMPLE;','NLS_LANGUAGE=''AMERICAN'' NLS_TERRITORY=''AMERICA'' NLS_CURRENCY=''$''NLS_ISO_CURRENCY=''AMERICA'' NLS_NUMERIC_CHARACTERS=''.,'' NLS_DATE_FORMAT=''DD-MON-YYYY''NLS_DATE_LANGUAGE=''AMERICAN'' NLS_SORT=''BINARY''','0102000000000000')
+
+*****************************************************************************
+to get more sql info from awr reports
+
+exec dbms_workload_repository.awr_set_report_thresholds(top_n_sql=>50);
+exec dbms_workload_repository.awr_set_report_thresholds(top_sql_pct=>0.1);
+
+*****************************************************************************
+
+How to get a list of all events 
+
+from sql*plus
+
+SET SERVEROUTPUT ON
+     DECLARE
+       err_msg VARCHAR2(120);
+     BEGIN
+       dbms_output.enable (1000000);
+       FOR err_num IN 10000..10999
+       LOOP
+         err_msg := SQLERRM (-err_num);
+         IF err_msg NOT LIKE '%Message '||err_num||' not found%' THEN
+           dbms_output.put_line (err_msg);
+         END IF;
+       END LOOP;
+     END;
+     /
+
+from unix
+
+$ORACLE_HOME/rdbms/mesg/oraus.msg
+ 
+To print detailed event messages (Unix only) use the following script
+ 
+    event=10000
+     while [ $event -ne 10999 ]
+     do
+         event=`expr $event + 1`
+         oerr ora $event
+     done
+
+*****************************************************************************
+To get a list of all events set
+
+SET SERVEROUTPUT ON
+     DECLARE
+         l_level NUMBER;
+     BEGIN
+         FOR l_event IN 10000..10999
+         LOOP
+             dbms_system.read_ev (l_event,l_level);
+             IF l_level > 0 THEN
+                 dbms_output.put_line ('Event '||TO_CHAR (l_event)||
+                 ' is set at level '||TO_CHAR (l_level));
+             END IF;
+         END LOOP;
+     END;
+     /
+
+*****************************************************************************
+
+
+alter session set events '1555 trace name processstate level 10; name errorstack level 3';
+
+alter session set events '1555 trace name processstate level 10; name errorstack level 3:4031 trace name errorstack level 3';
+
+*****************************************************************************
+10020 trace
+
+ALTER SESSION SET EVENTS '10200 TRACE NAME CONTEXT FOREVER, LEVEL 1';
+
+*****************************************************************************
+
+10053 trace
+
+ALTER SESSION SET EVENTS '10053 trace name context forever, level 1';
+
+
+*****************************************************************************
+Parallel Tracing
+10128 (level 2 perhaps) for partitioning information - seems like some problem with this, not working in DW
+10391 (level 2048 and 64 perhaps) for PQ activity. - ex - alter session set events '10391 trace name context forever , level 64';
+
+alter session set events '10390 trace name context forever , level 1166';
+ALTER SESSION SET EVENTS '10393 trace name context forever, level 1'; - parallel query statistics
+
+
+Below is suggested in one of my Oracle TAR's for PQ_DISTRIBUTE issue
+alter session set events '10053 trace name context forever';
+alter session set "_px_trace"="high", "granule", "low", "messaging", "group", "time";
+
+*****************************************************************************
+10132 trace
+alter session set events '10132 trace name context forever, level 12';
+
+*****************************************************************************
+
+How to trace a parallel session
+exec dbms_session.set_identifier('srivenu1');
+alter session set max_dump_file_size = unlimited;
+alter session set tracefile_identifier = 'srivenu1';
+exec dbms_monitor.client_id_trace_enable(client_id => 'srivenu1');
+trcsess output="srivenu1.trc" clientid="srivenu1" /oracle/admin/TEST1020/udump/*.trc /oracle/admin/TEST1020/bdump/*.trc
+
+*****************************************************************************
+
+How to create a client wallet to avoid giving passwords while connecting with sql*plus
+
+mkstore -wrl <wallet_location> -create
+
+ex - mkstore  -wrl  C:\oracle\product\10.2.0\client_1\NETWORK\ADMIN -create
+
+mkstore -wrl <wallet_location> -createCredential <db_alias> <username> <password>
+
+ex - mkstore  -wrl  C:\oracle\product\10.2.0\client_1\NETWORK\ADMIN -createCredential sg1 sys 123
+
+if you get this error Exception in thread "main" java.lang.NoClassDefFoundError: oracle/security/pki/OracleSecretStoreTextUI
+use complete path for mkstore 
+
+then you can connect like this
+sqlplus /@sg1
+
+*****************************************************************************
+
+to free up memory usage
+
+dbms_session.free_unused_user_memory
+
+*****************************************************************************
+
+How to heap dump a process  - to show the memory usage details
+
+oradebug setorapid {process id} 
+oradebug dump heapdump 1
+
+
+*****************************************************************************
+How to pivot and string up values - using SYS_CONNECT_BY_PATH()
+example - 
+How to display data like this
+
+DEPTNO  ENAMES
+------- ------------
+10      clark king miller
+20      adams ford …
+
+
+
+select 	deptno, max(sys_connect_by_path(ename, ' ' )) scbp
+from 	(select deptno, ename, row_number() over (partition by deptno order by ename) rn from emp)
+start 	with rn = 1
+connect by prior rn = rn-1 and prior deptno = deptno
+group 	by deptno
+order 	by deptno
+/
+
+DEPTNO 	   SCBP
+---------- ----------------------------------------
+10 	   CLARK KING MILLER
+20 	   ADAMS FORD JONES SCOTT SMITH
+30 	   ALLEN BLAKE JAMES MARTIN TURNER WARD
+
+*****************************************************************************
+Density calculation in Height Based Histogram
+
+Density = [(BktCnt - PopBktCnt) / BktCnt] / (NDV - PopValCnt)
+
+*****************************************************************************
+How to remove a ORACLE_HOME from central inventory
+central inventory is located in a location pointed by /etc/orainst.loc (on linux) or /var/opt/oracle/oraInst.loc (solaris)
+This lists all ORACLE_HOMES in the file <central inventory path>/oraInventory/ContentsXML/inventory.xml.
+The home index and home name values recorded in the central inventory must match whats there in the local inventories
+the local inventory is under $ORACLE_HOME/inventory/ContentsXML/comps.xml
+
+To remove an oracle home from the central inventory, use this command
+
+$ORACLE_HOME/oui/bin/runInstaller -silent  -detachHome ORACLE_HOME=<target_home>
+
+
+Example - 
+
+$ORACLE_HOME/oui/bin/runInstaller -silent -detachHome ORACLE_HOME="/db/oracle/ogg/12.3.0.1"  ORACLE_HOME_NAME="OraHome1"
+
+./oui/bin/runInstaller -silent -attachHome ORACLE_HOME="/opt/app/oracle/product/10.2.0.4/A01dbR"  ORACLE_HOME_NAME="10204A01dbR"
+
+To Attach a Oracle Home
+./oui/bin/runInstaller -silent -attachHome ORACLE_HOME="/opt/app/oracle/product/10.2.0.4/A01dbR"  ORACLE_HOME_NAME="10204A01dbR"
+
+
+*****************************************************************************
+
+convert raw to decimal - to_number(substr(to_char(rawtohex(p2raw)),1,8),'XXXXXXXX')
+
+ex - p2 raw to decimal
+
+select 	p2raw, to_number(substr(to_char(rawtohex(p2raw)),1,8),'XXXXXXXX') sid, count(*)
+from 	v$session 
+where 	event = 'cursor: pin S wait on X'
+group	by p2raw, to_number(substr(to_char(rawtohex(p2raw)),1,8),'XXXXXXXX')
+
+*****************************************************************************
+Error event tracing
+
+alter system set events '942 trace name errorstack level 3';
+
+*****************************************************************************
+
+to cleanup online index rebuild
+
+declare
+v boolean;
+begin
+v:=sys.dbms_repair.online_index_clean(11431952);
+end;
+/
+
+*****************************************************************************
+SEQUENCE usage
+
+select	ds.SEQUENCE_OWNER, ds.SEQUENCE_NAME, 
+	CEIL(CEIL(ds.noused/do.noofdays)/1440) usedpermin, 
+	ds.CACHE_SIZE
+from	
+	(select SEQUENCE_OWNER, SEQUENCE_NAME, 
+		ROUND(LAST_NUMBER-MIN_VALUE/INCREMENT_BY) noused, 
+		CACHE_SIZE
+	from  	dba_sequences
+	where  	SEQUENCE_OWNER not in 
+		('SYS', 'SYSTEM', 'OUTLN', 'DBSNMP')
+	) ds,
+	(select	OWNER, OBJECT_NAME, sysdate-CREATED noofdays
+	from	dba_objects
+	where  	OBJECT_TYPE = 'SEQUENCE'
+	and	OBJECT_NAME not in 
+		('SYS', 'SYSTEM', 'OUTLN', 'DBSNMP')
+	) do
+where	ds.SEQUENCE_OWNER = do.OWNER
+and	ds.SEQUENCE_NAME = do.OBJECT_NAME
+order	by ds.SEQUENCE_OWNER, ds.SEQUENCE_NAME
+/
+
+
+*****************************************************************************
+Send mail using utl_smtp
+
+declare
+	v_mail_conn	UTL_SMTP.CONNECTION;
+BEGIN
+	v_mail_conn := utl_smtp.open_connection('localhost', 25);
+	utl_smtp.helo(v_mail_conn,'db-dw2-6001.iad6.amazon.com');
+	utl_smtp.mail(v_mail_conn, 'oracle@amazon.com');
+	utl_smtp.rcpt(v_mail_conn,'kadiyala@amazon.com');
+	utl_smtp.rcpt(v_mail_conn,'sudheerl@amazon.com');
+	utl_smtp.open_data(v_mail_conn);
+	utl_smtp.write_data(v_mail_conn, 'Subject:  - Sandbox Password expiration Alert..'||utl_tcp.crlf);
+	utl_smtp.write_data(v_mail_conn,'To: kadiyala@amazon.com'||utl_tcp.crlf);
+	utl_smtp.write_data(v_mail_conn,'CC: sudheerl@amazon.com'||utl_tcp.crlf);
+        utl_smtp.write_data(v_mail_conn, 'Password for will expire '||utl_tcp.crlf);
+	UTL_SMTP.close_data(v_mail_conn);
+	utl_smtp.quit(v_mail_conn);		
+END;
+/
+
+
+
+*****************************************************************************
+create outline
+
+exec dbms_outln.create_outline(1160753465,0);
+
+
+*****************************************************************************
+To test a private database link
+
+CREATE 	OR REPLACE PROCEDURE TESTDBLINK ( 
+	OWNER   VARCHAR2,
+      	DBLINK  VARCHAR2)
+IS	
+	HCURSOR  INTEGER;
+	RC       INTEGER;
+	UID      INTEGER;
+BEGIN
+	SELECT 	U.USER_ID
+	INTO   	UID
+	FROM   	DBA_USERS U
+	WHERE  	U.USERNAME = UPPER(OWNER);
+	HCURSOR := SYS.DBMS_SYS_SQL.OPEN_CURSOR;
+	SYS.DBMS_SYS_SQL.PARSE_AS_USER(C => HCURSOR,STATEMENT => 'select sysdate from dual@'
+                                              ||DBLINK,LANGUAGE_FLAG => DBMS_SQL.NATIVE,
+                                 USERID => UID);
+  	RC := SYS.DBMS_SYS_SQL.EXECUTE(HCURSOR);
+  	SYS.DBMS_SYS_SQL.CLOSE_CURSOR(HCURSOR);
+  	DBMS_OUTPUT.PUT_LINE('sucess');
+EXCEPTION
+	WHEN 	OTHERS THEN
+		SYS.DBMS_SYS_SQL.CLOSE_CURSOR(HCURSOR);
+		DBMS_OUTPUT.PUT_LINE('failure');
+		RAISE;
+END;
+
+
+*****************************************************************************
+How to turn off patches selectively
+
+alter system set "_fix_control" = '7452863:off','7452823:off' sid = '*';
+
+To check for the status query this
+
+select distinct bugno, value, description from v$session_fix_control;
+
+
+*****************************************************************************
+How to check CRS version
+$CRS_home/bin/crsctl query crs softwareversion
+
+
+
+*****************************************************************************
+Hanganalyze dumps
+*****************************************************************************
+
+sqlplus /nolog
+connect / as sysdba
+oradebug setmypid
+oradebug unlimit
+oradebug hanganalyze 3
+wait 90 seconds
+oradebug hanganalyze 3
+exit
+
+The levels are defined as follows:
+
+    10     Dump all processes (IGN state)
+    5      Level 4 + Dump all processes involved in wait chains (NLEAF state)
+    4      Level 3 + Dump leaf nodes (blockers) in wait chains (LEAF,LEAF_NW,IGN_DMP state)
+    3      Level 2 + Dump only processes thought to be in a hang (IN_HANG state)
+    1-2    Only HANGANALYZE output, no process dump at all
+
+To perform cluster wide HANGANALYZE use the following syntax:
+
+    ORADEBUG setmypid
+    ORADEBUG setinst all
+    ORADEBUG -g def hanganalyze <level>
+    oradebug -G all hanganalyze 2
+
+
+sometimes you cannot login to an instance to take hanganalyze dumps.
+Then use sqlplus -prelim '/as sysdba'
+
+If you have a debugger like gdb (hp-ux, linux) you can use this
+gdb $ORACLE_HOME/bin/oracle <insert pid for pmon process>
+(gdb) print ksdhng(3,1,0)
+(gdb) detach
+(gdb) quit
+
+
+*****************************************************************************
+systemstate  dumps
+*****************************************************************************
+
+Systemstate dumps
+
+$ sqlplus /nolog
+connect / as sysdba
+oradebug setmypid
+oradebug unlimit
+oradebug dump systemstate 10
+wait 90 seconds
+oradebug dump systemstate 10
+wait 90 seconds
+oradebug dump systemstate 10
+exit
+
+Use systemstate level 266 in 9.2.0.6+
+
+for RAC to dump systemstate in all instances, use
+
+oradebug -G all dump systemstate 266
+
+To debug system hang
+oradebug setmypid
+oradebug unlimit
+oradebug tracefile_name
+oradebug -G all hanganalyze 3
+oradebug -G all dump systemstate 266
+
+
+sometimes you cannot login to an instance to take hanganalyze dumps.
+Then use sqlplus -prelim '/as sysdba'
+
+If you have a debugger like dbx (solaris, linux) you can use this
+dbx -a PID (where PID = any oracle shadow process)
+dbx() print ksudss(10)
+...return value printed here
+dbx() detach
+
+If you have a debugger like gdb (hp-ux, linux) you can use this
+gdb $ORACLE_HOME/bin/oracle <insert pid for pmon process>
+(gdb) stepi                ## to get stepi running you need to actually be doing something in the oracle shadow
+(gdb) call ksudss(10)
+$1 = <gdb will output some number here>
+(gdb) detach            ## and systemstate is written to the dump directory. 
+(gdb) quit                ## to leave gdb
+
+
+*****************************************************************************
+Processstate dumps
+*****************************************************************************
+Trace the process from the os level (see step 4).
+
+Get processstate dumps. Do 3 times.
+
+$ sqlplus "/as sysdba"
+oradebug setospid <process ID>
+oradebug unlimit
+oradebug dump processstate 10
+
+Get errorstacks from the process. Do 3 times. 
+
+$ sqlplus "/as sysdba"
+oradebug setospid <process ID>
+oradebug unlimit
+oradebug dump errorstack 3
+
+**********************
+Cursor dumps
+**********************
+oradebug call curdmp
+
+***************************
+How to get x$ table names
+***************************
+
+query - x$kqfta
+SELECT kqftanam
+FROM x$kqfta
+WHERE kqftanam LIKE 'X$KSL%'
+
+
+***************************
+Analyze index block accesses with index tree dump and 10046, 10200 & 10203 traces
+4-PushatEndof1Million.trc - trace with 10046, 10200 & 10203
+IndexTreeDump.trc - index tree dump
+
+cat 4-PushatEndof1Million.trc |
+awk '/tim=7868371184904/,/tim=7868371679788/'|
+grep -i "completed for block" |
+grep "objd: 0x0007c8f3"|
+awk '{gsub(">"," ",$7);gsub("0x0"," ",$7);print $7}'|
+while read line 
+do
+grep $line IndexTreeDump.trc
+done|wc -l
+
+***************************
+How to generate Branch Block dumps from Index tree dump
+
+
+alter session set max_dump_file_size = unlimited
+/
+
+select * from v$diag_info where NAME = 'Default Trace File'
+/
+
+SELECT object_id FROM dba_objects WHERE object_name = 'STORED_MSG_ONL_IDX1'
+/
+
+ALTER SESSION SET EVENTS 'immediate trace name treedump level 505978'
+/
+
+
+
+grep -i branch /isqdata61/dbs/diag/rdbms/isq_gdrsd_listener_ce/ISQ/trace/ISQ_ora_4379.trc|
+	awk '
+	{
+		print "alter system dump datafile dbms_utility.DATA_BLOCK_ADDRESS_file(" $3 ") block dbms_utility.DATA_BLOCK_ADDRESS_BLOCK(" $3 ");";
+	}
+	'
+
+
+select 	'alter system dump datafile '||dbms_utility.DATA_BLOCK_ADDRESS_file(201326815)||
+	' block '||dbms_utility.DATA_BLOCK_ADDRESS_BLOCK(201326815)||' ;'
+from 	dual
+/
+
+**************************************
+How to drop extended Stats on a table
+**************************************
+
+set lines 300
+
+select  'exec DBMS_STATS.DROP_EXTENDED_STATS('''||OWNER||''','''||TABLE_NAME||''','''||to_char(EXTENSION)||''');'
+from    dba_stat_extensions
+where   owner = upper('&1')
+and     table_name = upper('&2')
+order   by 1
+/
+
+
+*******************************
+How to get stats for x$ tables
+*******************************
+
+DECLARE
+   numrows NUMBER;
+   numblks NUMBER;
+   avgrlen NUMBER;
+   cachedblk   NUMBER;
+   cachehit    NUMBER;
+   no_statistics     EXCEPTION;
+   PRAGMA EXCEPTION_INIT(no_statistics, -20000);
+BEGIN
+
+   DBMS_STATS.GET_TABLE_STATS (
+   ownname=>null,
+   tabname=>'X$KSFQP',
+   numrows=>numrows,
+   numblks=>numblks,
+   avgrlen=>avgrlen,
+   cachedblk=>cachedblk,
+   cachehit=>cachehit);
+
+   DBMS_OUTPUT.PUT_LINE( '');
+   DBMS_OUTPUT.PUT_LINE( 'Statistics with the DBMS_STATS.GET_TABLE_STATS:');
+   DBMS_OUTPUT.PUT_LINE( '-----------------------------------------------');
+   DBMS_OUTPUT.PUT_LINE( 'numrows:    ' || numrows );
+   DBMS_OUTPUT.PUT_LINE( 'numblks:    ' || numblks );
+   DBMS_OUTPUT.PUT_LINE( 'avgrlen:    ' || avgrlen );
+   DBMS_OUTPUT.PUT_LINE( 'cachedblk:  ' || cachedblk );
+   DBMS_OUTPUT.PUT_LINE( 'cachehit:   ' || cachehit );
+
+   EXCEPTION
+           WHEN no_statistics THEN
+                DBMS_OUTPUT.PUT_LINE( 'No Statistics for this table. No Statistics have been gathered ?');
+                DBMS_OUTPUT.PUT_LINE( 'ORA-20000: Unable to get values for table X$KSFQP');
+END;
+/
+
+
+*******************************
+How to restore old stats for a table
+*******************************
+
+select 	TABLE_NAME, STATS_UPDATE_TIME 
+from 	dba_tab_stats_history 
+where 	table_name='MPS_STAGED_MESSAGE' 
+and 	owner='SCH_SIM' 
+order 	by 2
+/
+
+exec dbms_stats.restore_table_stats(ownname=>'SCH_SIM',tabname=>'MPS_STAGED_MESSAGE',AS_OF_TIMESTAMP=>'12-MAR-19 01.25.54.409202 AM -07:00');
+
+
+***************
+RMAN - Clone standby
+***************
+
+
+
+DUPLICATE TARGET DATABASE
+FOR STANDBY
+FROM ACTIVE DATABASE
+DORECOVER
+NOFILENAMECHECK;
+
+*******************************
+Flush sql from shared pool
+*******************************
+
+define SQL_ID = '04ysnrga1fck6'
+
+select 	'exec DBMS_SHARED_POOL.PURGE ('''||ADDRESS||','||HASH_VALUE||''', ''C'',64);'||CHR(10)||'exec DBMS_SHARED_POOL.PURGE ('''||ADDRESS||','||HASH_VALUE||''', ''C'');'
+from 	V$SQLAREA
+where 	SQL_ID = '&SQL_ID'
+/
+
+
+*******************************
+Drop SQL Plan Baselines
+*******************************
+
+define SQL_ID = '98q7b3pau44gw'
+
+col child_number head "Child" form 9999
+col CHILD_LATCH head "Child|Latch" form 999
+col OUTLINE_CATEGORY head "Outline|Category" form a10
+col SQL_PROFILE head "SQL Profile" form a30
+col SQL_PATCH head "SQL Patch" form a12
+col SQL_PLAN_BASELINE head "SQL Baseline" form a30
+col EXACT_MATCHING_SIGNATURE head "Exact|Matching|Signature" form 99999999999999999999
+col FORCE_MATCHING_SIGNATURE head "Force|Matching|Signature" form 99999999999999999999
+
+select  child_number, CHILD_LATCH, OUTLINE_CATEGORY, 
+	SQL_PROFILE, SQL_PATCH, SQL_PLAN_BASELINE, EXACT_MATCHING_SIGNATURE, 
+	FORCE_MATCHING_SIGNATURE
+from 	v$sql
+where 	sql_id='&sql_id'
+order 	by 1, 2
+/
+
+                                                                                                                  Exact                 Force
+      Child Outline                                                                                            Matching              Matching
+Child Latch Category   SQL Profile                    SQL Patch    SQL Baseline                               Signature             Signature
+----- ----- ---------- ------------------------------ ------------ ------------------------------ --------------------- ---------------------
+    0     0                                                        SQL_PLAN_71sjyrxt7n53g6129db73   1637271850891336498   1637271850891336498
+
+col SQL_HANDLE form a30
+col SQL_TEXT form a50
+col PLAN_NAME form a30
+col ORIGIN form a15
+col ENABLED form a5
+col ACCEPTED form a5
+col CREATED form a15
+SELECT SQL_HANDLE, SQL_TEXT, PLAN_NAME, ORIGIN, ENABLED, ACCEPTED, CREATED
+FROM   DBA_SQL_PLAN_BASELINES
+WHERE  PLAN_NAME = 'SQL_PLAN_1pg826w6d5muba107a835'
+/
+
+SQL_HANDLE                     SQL_TEXT                                           PLAN_NAME                      ORIGIN          ENABL ACCEP
+------------------------------ -------------------------------------------------- ------------------------------ --------------- ----- -----
+SQL_70e23ebf727a146f           SELECT 'Y' FROM ITEM_SUPPLIER   WHERE VPN =  :1  A SQL_PLAN_71sjyrxt7n53g6129db73 MANUAL-LOAD     YES   YES
+                               ND SUPPLIER =  NVL(:1 , SUPPLI
+
+
+var v_dropped_plans number;
+exec :v_dropped_plans := DBMS_SPM.DROP_SQL_PLAN_BASELINE (sql_handle => 'SQL_1abd02370cd2cf4b');
+
+
+SELECT SQL_HANDLE, SQL_TEXT, PLAN_NAME, ORIGIN, ENABLED, ACCEPTED
+FROM   DBA_SQL_PLAN_BASELINES
+WHERE  SQL_TEXT LIKE 'INSERT INTO NRD_MC_TRAN_COLLECT%'
+/
+
+*****************************************************************************
+SQL Profiling
+*****************************************************************************
+DECLARE
+	my_task_name VARCHAR2(30);
+BEGIN
+	my_task_name := DBMS_SQLTUNE.CREATE_TUNING_TASK(
+		sql_id => 'bsmb5rbjdtkyu',
+		PLAN_HASH_VALUE => 1204411614,
+		scope => 'COMPREHENSIVE',
+		time_limit => 60,
+		task_name => 'my_sql_tuning_task1',
+		description => 'Task to tune a query');
+END;
+/
+
+
+BEGIN
+DBMS_SQLTUNE.EXECUTE_TUNING_TASK( task_name => 'my_sql_tuning_task1' );
+END;
+/
+
+SELECT status FROM USER_ADVISOR_TASKS WHERE task_name = 'my_sql_tuning_task1'
+/
+
+
+SELECT 	sofar, totalwork 
+FROM 	V$ADVISOR_PROGRESS 
+WHERE 	username = 'KADIYALA_DBA' 
+AND 	task_name = 'my_sql_tuning_task1'
+/
+
+
+
+SET LONGCHUNKSIZE 1000
+SET LINESIZE 100
+SELECT 	DBMS_SQLTUNE.REPORT_TUNING_TASK( 'my_sql_tuning_task1')
+FROM 	DUAL
+/
+
+
+DECLARE
+	my_task_name VARCHAR2(30);
+BEGIN
+	my_task_name := DBMS_SQLTUNE.ACCEPT_SQL_PROFILE(
+		task_name => 'my_sql_tuning_task1');
+END;
+/
+
+
+*******************************
+Drop SQL Profile
+*******************************
+
+exec dbms_sqltune.drop_sql_profile('PROFILE_6c0fy86bbv4fn');
+
+*******************************
+Create sql profile from a plan in AWR
+*******************************
+
+define SQL_ID = '9zax2tgzs9m0x'
+define PLAN_HASH_VALUE = 2360936877
+
+/* Randolf Giest */
+-- creates a sql profile from shared pool
+-- sql_id child_no category force_matching
+declare
+ar_profile_hints 	sys.sqlprof_attr;
+cl_sql_text 		clob;
+begin
+select	extractvalue(value(d), '/hint') as outline_hints
+bulk 	collect
+into	ar_profile_hints
+from	xmltable('/*/outline_data/hint'
+	passing (
+		select	xmltype(other_xml) as xmlval
+		from	DBA_HIST_SQL_PLAN
+		where	sql_id = '&SQL_ID'
+		and 	PLAN_HASH_VALUE = &PLAN_HASH_VALUE
+		and 	other_xml is not null
+		)
+	) d;
+select	sql_text
+into	cl_sql_text
+from	DBA_HIST_SQLTEXT
+where	sql_id = '&SQL_ID'
+and	rownum=1;
+dbms_sqltune.import_sql_profile(
+	sql_text => cl_sql_text, 
+	profile => ar_profile_hints,
+	name => 'PROFILE_&SQL_ID'
+	);
+end;
+/
+
+*******************************
+How to do log mining
+*******************************
+
+EXECUTE DBMS_LOGMNR.ADD_LOGFILE(LOGFILENAME => '/db/r1/tst/DD310/oraarch/arch_1_22591_982270172.log',  OPTIONS => DBMS_LOGMNR.NEW);
+EXECUTE DBMS_LOGMNR.ADD_LOGFILE(LOGFILENAME => '/db/r1/tst/DD310/oraarch/arch_1_22591_982270173.log',  OPTIONS => DBMS_LOGMNR.ADDFILE);
+
+EXECUTE DBMS_LOGMNR.START_LOGMNR(OPTIONS => DBMS_LOGMNR.DICT_FROM_ONLINE_CATALOG);
+if you want committed data only and pretty sql
+EXECUTE DBMS_LOGMNR.START_LOGMNR(OPTIONS => DBMS_LOGMNR.DICT_FROM_ONLINE_CATALOG + DBMS_LOGMNR.COMMITTED_DATA_ONLY + DBMS_LOGMNR.PRINT_PRETTY_SQL);
+
+Query the V$LOGMNR_CONTENTS
+
+SELECT 	username AS USR, (XIDUSN || '.' || XIDSLT || '.' ||  XIDSQN) AS XID, 
+   	SQL_REDO
+FROM 	V$LOGMNR_CONTENTS 
+WHERE 	TABLE_NAME IN ('HR', 'OE');
+
+
+set numwidth 20
+col sql_redo form a60
+col sql_undo form a40
+col table_name form a30
+ 
+SELECT SCN, START_SCN, COMMIT_SCN, START_TIMESTAMP, COMMIT_TIMESTAMP, SQL_REDO
+FROM   V$LOGMNR_CONTENTS 
+WHERE TABLE_NAME IN ('RETURN', 'RETURN_LINE_ITEM', 'STORE_ITEM_STOCK', 'STORE_ITEM_STOCK_HISTORY', 'MPS_STAGED_MESSAGE')
+/
+
+
+set lines 300
+alter session set nls_date_format='DD-MON HH24:MI:SS';
+set numwidth 16
+col TIMESTAMP form a16
+col COMMIT_TIMESTAMP form a16
+col XID form a17
+col table_name form a30
+col sql_redo form a40
+
+SELECT SCN, START_SCN, COMMIT_SCN, TIMESTAMP, COMMIT_TIMESTAMP, XID, TABLE_NAME, SQL_REDO
+FROM   V$LOGMNR_CONTENTS
+WHERE 	TABLE_NAME IN ('HR', 'OE');
+/
+
+
+*******************************
+Move/Copy SQL Profile from one database to another
+*******************************
+
+
+EXEC DBMS_SQLTUNE.CREATE_STGTAB_SQLPROF (SCHEMA_NAME => 'SCH_OP_INTF', table_name => 'SQL_PROF_STGTAB');
+
+EXEC DBMS_SQLTUNE.PACK_STGTAB_SQLPROF (STAGING_SCHEMA_OWNER => 'SCH_OP_INTF', staging_table_name => 'SQL_PROF_STGTAB', profile_name=>'SYS_SQLPROF_0155f1430d980001');
+
+expdp DUMPFILE=SQL_PROF_STGTAB.dmp DIRECTORY=SQLBL TABLES=SCH_OP_INTF.SQL_PROF_STGTAB
+
+impdp DUMPFILE=SQL_PROF_STGTAB.dmp DIRECTORY=EXP_TMP FULL=y
+
+EXEC DBMS_SQLTUNE.UNPACK_STGTAB_SQLPROF(REPLACE => TRUE, STAGING_SCHEMA_OWNER=> 'SCH_OP_INTF', staging_table_name => 'SQL_PROF_STGTAB' );
+
+
+*******************************
+dgmgrl /
+DGMGRL> SHOW CONFIGURATION VERBOSE
+
+
+To check configuration
+
+To disable dataguard redo transport
+EDIT CONFIGURATION SET PROTECTION MODE AS MaxPerformance;
+edit database PRD01A set state=transport-off;
+
+To enable dataguard redo transport
+edit database PRD01A set state=transport-on;
+EDIT CONFIGURATION SET PROTECTION MODE AS MaxAvailability;

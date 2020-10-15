@@ -1,0 +1,37 @@
+
+declare
+ cursor c_cur is select owner,table_name from dba_tables order by owner,table_name;
+ v_cur c_cur%rowtype;
+begin
+ for v_cur in c_cur loop
+   execute immediate 'analyze table '||v_cur.owner||'.'||v_cur.table_name||' list chained rows into chained_rows';
+ end loop;
+end;
+/
+
+
+
+col owner head "Owner" form a10
+col table_name head "Table Name" form a30
+col num_rows head "Total|No Of|Rows" form 9999999999
+col chain_rows head "Total|No Of|Chain|Rows" form 999999
+col pctchain head "% Of|Chain|Rows" form 999.9
+col pct_free head "%|Fr|ee" form 99
+col avg_space head "Avg|Free|Space|In A|Block" form 9999
+col avg_row_len head "Avg|Row|Len|gth" form 99999
+col blocks head "Blocks" form 9999999
+col ini_trans head "Ini|Tra|ns" form 99
+
+
+select	dt.owner, dt.table_name, 
+	dt.num_rows, ct.chain_rows, (100 *  ct.chain_rows)/dt.num_rows pctchain,
+	pct_free, avg_space, avg_row_len, ini_trans, blocks
+from	dba_tables dt,
+	(select owner_name,table_name,count(*) chain_rows
+	from 	chained_rows 
+	group 	by owner_name,table_name) ct
+where	dt.owner = ct.owner_name
+and	dt.table_name = ct.table_name
+order 	by 4 desc
+/
+

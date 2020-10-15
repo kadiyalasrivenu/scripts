@@ -1,0 +1,43 @@
+
+create table ash_backup as select * from v$active_session_history where 1=2
+/
+
+create table ash_info (
+	last_sample_time 	TIMESTAMP(3),
+ 	curr_time		TIMESTAMP(3))
+/
+
+insert into ash_info select systimestamp, systimestamp from dual
+/
+
+commit
+/
+
+#!/usr/bin/ksh
+set -vx
+
+ACTIVE_SESSION_HISTORY="V\$ACTIVE_SESSION_HISTORY"
+
+function ash_info
+{
+sqlplus -s / as sysdba <<EOF
+whenever sqlerror exit 1
+
+update ash_info set curr_time = systimestamp
+/
+insert into ash_backup select * from ${ACTIVE_SESSION_HISTORY} where SAMPLE_TIME >= (select last_sample_time from ash_info)
+/
+update ash_info set last_sample_time = curr_time
+/
+commit
+/
+
+EOF
+}
+
+while [ ! -f /tmp/stop_ash_info ]
+do
+  ash_info
+  sleep 60
+done
+

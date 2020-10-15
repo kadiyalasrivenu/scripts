@@ -1,0 +1,23 @@
+#!/bin/ksh
+#set -vx
+
+export rgaccesslog=`ls -t $APACHE_TOP/Apache/logs/access* 2>/dev/null|head -1 ` 2>/dev/null
+export ddaccesslog=`ls -t $APACHE_TOP/Apache/logs/cz_access* 2>/dev/null|head -1 ` 2>/dev/null
+
+if [  -f "$rgaccesslog" ] 
+then
+ echo "=================================="
+ echo "last 15 Regular Apache Accesses"
+ echo "=================================="
+ tail -r $rgaccesslog|grep -i "$1"|awk '{print};NR>15 {exit}' |tail -r
+fi
+
+if [ ! -f "$ddaccesslog" ] 
+then
+ exit 1
+fi
+
+echo "=================================="
+echo "last 15 Dedicated Apache Accesses"
+echo "=================================="
+tail -r $ddaccesslog|grep -i "$1" |awk '{print};NR>15 {exit}'|tail -r

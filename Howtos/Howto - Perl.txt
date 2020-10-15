@@ -1,0 +1,12 @@
+
+
+**********************************************************
+To get url from perl - http request from perl
+**********************************************************
+
+perl -MLWP::Simple -e "getprint 'https://10.8.164.146:3872/emd/main'"
+
+To avoid certificate verification error
+
+export PERL_LWP_SSL_VERIFY_HOSTNAME=0;perl -MLWP::Simple -e "getprint 'https://10.8.164.146:3872/emd/main'"
+

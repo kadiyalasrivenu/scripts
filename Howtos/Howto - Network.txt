@@ -1,0 +1,25 @@
+How to find a client IP
+
+nbtstat -a
+
+example - nbtstat -a  10.3.153.42
+
+
+**********************************************************
+
+How to find whether a port is active on a server
+
+telnet <host> <port>
+
+ex - telnet 10.1.0.239 1521
+
+**********************************************************
+Check open ports on linux server
+
+netstat -anl
+
+**********************************************************
+
+Check Connection on a port
+
+nc -zv mpeggtst1 7421

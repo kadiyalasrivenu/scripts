@@ -1,0 +1,21 @@
+********************************
+To replace text
+********************************
+
+You have text like this
+
+/db/oracle/diag/rdbms/dd461a/DD461/trace/DD461_ora_9336.trc
+/db/oracle/diag/rdbms/dd461a/DD461/trace/DD461_ora_15911.trc
+/db/oracle/diag/rdbms/dd461a/DD461/trace/DD461_ora_17170.trc
+/db/oracle/diag/rdbms/dd461a/DD461/trace/DD461_ora_15755.trc
+/db/oracle/diag/rdbms/dd461a/DD461/trace/DD461_ora_15967.trc
+/db/oracle/diag/rdbms/dd461a/DD461/trace/DD461_ora_15749.trc
+/db/oracle/diag/rdbms/dd461a/DD461/trace/DD461_ora_9336.trc
+/db/oracle/diag/rdbms/dd461a/DD461/trace/DD461_ora_15679.trc
+/db/oracle/diag/rdbms/dd461a/DD461/trace/DD461_ora_9416.trc
+
+now you want to generate tkprof for all these files
+
+use this
+
+:%s:\(.*\)\(\.trc\):tkprof \1.trc \1.tkp:g

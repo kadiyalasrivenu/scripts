@@ -1,0 +1,35 @@
+# This script will scp files in directory /db/scffdo2/sri/data_decjanfeb/ which are currently not being written into
+#!/bin/ksh
+set -vx
+touch /tmp/files_processed
+files_skipped=0
+while [[ $files_skipped == 0 ]]
+do
+    find /db/scffdo2/sri/data_decjanfeb/ -name ic*| while read file
+    do
+        copy=1
+        if [[ $(grep "$file" /tmp/files_processed 2>/dev/null|wc -l) != 0 ]]
+        then
+            echo "Skipping file - $file - as it is already copied"
+            copy=0
+        else
+            if lsof $file
+            then 
+                lsof $file > /tmp/check_filetest
+                if [[ $(cat /tmp/check_filetest|tail -1|awk '{print $4}'|grep -i "w"|wc -l) != 0 ]]
+	        then
+	            echo "Skipping file - $file - as it is being written into"
+                    files_skipped=1
+                    copy=0
+                fi
+            fi
+            if [[ "${copy}" == 1 ]]
+            then
+                echo "Copying file - $file"
+                scp -i /export/home/oracle/172.19.241.158.pem $file ec2-user@172.19.241.158:/data/trail/data_decjanfeb/
+                echo $file >> /tmp/files_processed
+            fi
+        fi
+    done
+done
+

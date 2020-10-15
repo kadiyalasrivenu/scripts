@@ -1,0 +1,614 @@
+sudo dtrace -qn 'sysinfo::: { @[probename] = count(); } tick-1sec { printa(@); trunc(@); }'
+
+***************
+Normal time
+***************
+
+oracle@x0319p02:/db/oswatcher/oswbb/archive/oswtop$ sudo dtrace -qn 'sysinfo::: { @[probename] = count(); }^Jtick-1sec { printa(@); trunc(@); }'
+
+  bread                                                             1
+  rawch                                                             1
+  outch                                                             2
+  intrblk                                                           6
+  sysvfork                                                          6
+  bwrite                                                           48
+  sysfork                                                          56
+  sysexec                                                          61
+  nthreads                                                         63
+  lwrite                                                          171
+  lread                                                          1232
+  sema                                                           1453
+  inv_swtch                                                      1479
+  syswrite                                                      13585
+  writech                                                       13585
+  mutex_adenters                                                14401
+  namei                                                         17375
+  readch                                                        18857
+  sysread                                                       18857
+  idlethread                                                    42455
+  xcalls                                                        45954
+  trap                                                          56173
+  pswitch                                                       90753
+
+  bread                                                             2
+  sysvfork                                                          2
+  rw_wrfails                                                        3
+  intrblk                                                           5
+  outch                                                            24
+  bwrite                                                           45
+  sysexec                                                         127
+  sysfork                                                         127
+  nthreads                                                        130
+  lwrite                                                          161
+  lread                                                          1214
+  sema                                                           1527
+  inv_swtch                                                      1532
+  syswrite                                                      14627
+  writech                                                       14627
+  namei                                                         19139
+  readch                                                        22223
+  sysread                                                       22223
+  mutex_adenters                                                23512
+  idlethread                                                    43207
+  xcalls                                                        48332
+  trap                                                          69996
+  pswitch                                                       88811
+
+
+  bread                                                             1
+  canch                                                             1
+  rawch                                                             1
+  intrblk                                                           3
+  sysexec                                                          21
+  nthreads                                                         23
+  sysfork                                                          23
+  outch                                                            24
+  bwrite                                                           40
+  lwrite                                                          115
+  sema                                                           1120
+  inv_swtch                                                      1445
+  lread                                                          1459
+  namei                                                          4636
+  syswrite                                                      11293
+  writech                                                       11293
+  mutex_adenters                                                13633
+  readch                                                        17789
+  sysread                                                       17789
+  idlethread                                                    41777
+  xcalls                                                        43168
+  trap                                                          47032
+  pswitch                                                       84941
+
+
+
+  canch                                                             2
+  rawch                                                             2
+  intrblk                                                           6
+  outch                                                            24
+  sysexec                                                          34
+  bwrite                                                           39
+  nthreads                                                         48
+  sysfork                                                          48
+  lwrite                                                          122
+  sema                                                           1550
+  lread                                                          1558
+  inv_swtch                                                      1581
+  namei                                                         10383
+  writech                                                       12723
+  syswrite                                                      12724
+  readch                                                        19641
+  sysread                                                       19641
+  mutex_adenters                                                20332
+  idlethread                                                    45023
+  xcalls                                                        48060
+  trap                                                          53372
+  pswitch                                                       91577
+
+
+
+  canch                                                             2
+  rawch                                                             2
+  rw_wrfails                                                        4
+  intrblk                                                           5
+  outch                                                            23
+  bwrite                                                           39
+  sysexec                                                          90
+  nthreads                                                         94
+  sysfork                                                          94
+  lwrite                                                          118
+  lread                                                          1580
+  sema                                                           1597
+  inv_swtch                                                      1771
+  syswrite                                                      12599
+  writech                                                       12600
+  readch                                                        20767
+  sysread                                                       20768
+  namei                                                         24498
+  mutex_adenters                                                38545
+  idlethread                                                    49096
+  xcalls                                                        56965
+  trap                                                          68823
+  pswitch                                                      102057
+
+
+
+  sysvfork                                                          1
+  canch                                                             2
+  intrblk                                                           2
+  rawch                                                             2
+  sysexec                                                          21
+  sysfork                                                          21
+  nthreads                                                         23
+  outch                                                            24
+  bwrite                                                           30
+  lwrite                                                          107
+  lread                                                          1431
+  sema                                                           1502
+  inv_swtch                                                      1697
+  mutex_adenters                                                12963
+  namei                                                         14488
+  syswrite                                                      14503
+  writech                                                       14503
+  sysread                                                       21844
+  readch                                                        21845
+  idlethread                                                    46450
+  xcalls                                                        47730
+  trap                                                          52448
+  pswitch                                                       99416
+
+
+
+  canch                                                             2
+  rawch                                                             2
+  rw_wrfails                                                        4
+  sysvfork                                                          5
+  intrblk                                                           8
+  bwrite                                                           23
+  outch                                                            24
+  sysexec                                                         116
+  sysfork                                                         116
+  nthreads                                                        122
+  lwrite                                                          140
+  sema                                                           1723
+  inv_swtch                                                      1797
+  lread                                                          1958
+  syswrite                                                      14151
+  writech                                                       14151
+  namei                                                         17788
+  readch                                                        22366
+  sysread                                                       22366
+  mutex_adenters                                                25675
+  idlethread                                                    44354
+  xcalls                                                        53772
+  trap                                                          71885
+  pswitch                                                       90736
+
+
+
+  rw_rdfails                                                        1
+  sysvfork                                                          1
+  canch                                                             2
+  rawch                                                             2
+  rw_wrfails                                                        2
+  intrblk                                                           5
+  sysfork                                                           8
+  nthreads                                                          9
+  sysexec                                                          10
+  bwrite                                                           25
+  outch                                                            25
+  lwrite                                                           88
+  inv_swtch                                                      1172
+  sema                                                           1278
+  lread                                                          1291
+  namei                                                          3409
+  syswrite                                                       9812
+  writech                                                        9812
+  readch                                                        15602
+  sysread                                                       15602
+  mutex_adenters                                                15631
+  idlethread                                                    35465
+  xcalls                                                        36885
+  trap                                                          42865
+  pswitch                                                       72066
+
+
+
+  canch                                                             2
+  intrblk                                                           2
+  rawch                                                             2
+  sysexec                                                           8
+  nthreads                                                         11
+  sysfork                                                          11
+  bwrite                                                           26
+  outch                                                            26
+  lwrite                                                           70
+  sema                                                           1392
+  inv_swtch                                                      1545
+  lread                                                          2587
+  namei                                                          2611
+  syswrite                                                      12270
+  writech                                                       12270
+  readch                                                        16778
+  sysread                                                       16779
+  mutex_adenters                                                26479
+  trap                                                          45500
+  idlethread                                                    48946
+  xcalls                                                        50623
+  pswitch                                                       99716
+
+
+
+  sysvfork                                                          1
+  canch                                                             2
+  rawch                                                             2
+  intrblk                                                           4
+  outch                                                            23
+  sysexec                                                          24
+  bwrite                                                           26
+  sysfork                                                          26
+  nthreads                                                         27
+  lwrite                                                          184
+  sema                                                           1436
+  inv_swtch                                                      1571
+  lread                                                          1790
+  namei                                                         13302
+  mutex_adenters                                                17278
+  sysread                                                       23354
+  readch                                                        23355
+  syswrite                                                      23806
+  writech                                                       23806
+  idlethread                                                    44197
+  xcalls                                                        46800
+  trap                                                          49130
+  pswitch                                                       93211
+
+
+
+  canch                                                             2
+  rawch                                                             2
+  rw_rdfails                                                        2
+  intrblk                                                          10
+  outch                                                            24
+  bwrite                                                           31
+  sysexec                                                          94
+  nthreads                                                        100
+  sysfork                                                         100
+  lwrite                                                          199
+  sema                                                           1524
+  lread                                                          1691
+  inv_swtch                                                      1879
+  namei                                                         19697
+  readch                                                        22044
+  sysread                                                       22044
+  syswrite                                                      22758
+  writech                                                       22758
+  mutex_adenters                                                26607
+  idlethread                                                    49092
+  xcalls                                                        54766
+  trap                                                          83432
+  pswitch                                                      103304
+
+
+
+  canch                                                             2
+  rawch                                                             2
+  sysvfork                                                          3
+  rw_wrfails                                                        5
+  intrblk                                                          10
+  outch                                                            24
+  bwrite                                                           25
+  sysexec                                                          56
+  sysfork                                                          57
+  nthreads                                                         62
+  lwrite                                                          173
+  sema                                                           1683
+  inv_swtch                                                      1785
+  lread                                                          1882
+  namei                                                         11035
+  readch                                                        20078
+  sysread                                                       20078
+  syswrite                                                      20941
+  writech                                                       20941
+  mutex_adenters                                                33610
+  idlethread                                                    46297
+  xcalls                                                        51744
+  trap                                                          94544
+  pswitch                                                       94610
+
+
+
+  bread                                                             1
+  canch                                                             2
+  rawch                                                             2
+  sysvfork                                                          4
+  rw_wrfails                                                        6
+  intrblk                                                           7
+  rw_rdfails                                                       16
+  outch                                                            25
+  bwrite                                                           32
+  sysexec                                                         135
+  lwrite                                                          166
+  sysfork                                                         166
+  nthreads                                                        191
+  sema                                                           1479
+  inv_swtch                                                      1919
+  lread                                                          6632
+  readch                                                        23684
+  sysread                                                       23684
+  syswrite                                                      23870
+  writech                                                       23870
+  mutex_adenters                                                33860
+  idlethread                                                    48731
+  xcalls                                                        57432
+  trap                                                          79723
+  pswitch                                                      100559
+  namei                                                        114334
+
+
+
+  bread                                                             1
+  canch                                                             2
+  rawch                                                             2
+  sysvfork                                                          7
+  intrblk                                                           9
+  rw_wrfails                                                       12
+  bwrite                                                           28
+  outch                                                            28
+  rw_rdfails                                                       30
+  lwrite                                                          176
+  sysexec                                                         508
+  sysfork                                                         661
+  nthreads                                                        721
+  sema                                                           1514
+  inv_swtch                                                      3110
+  lread                                                         14971
+  syswrite                                                      22291
+  writech                                                       22291
+  readch                                                        27186
+  sysread                                                       27186
+  idlethread                                                    53061
+  xcalls                                                        82223
+  mutex_adenters                                                91726
+  pswitch                                                      112482
+  trap                                                         142983
+  namei                                                        345231
+
+
+
+  canch                                                             2
+  rawch                                                             2
+  rw_wrfails                                                        3
+  sysvfork                                                          3
+  rw_rdfails                                                        5
+  intrblk                                                           9
+  outch                                                            28
+  bwrite                                                           59
+  lwrite                                                          212
+  sysexec                                                         290
+  sysfork                                                         474
+  nthreads                                                        480
+  sema                                                           1876
+  inv_swtch                                                      2479
+  syswrite                                                      17100
+  writech                                                       17100
+  lread                                                         20629
+  readch                                                        34165
+  sysread                                                       34166
+  idlethread                                                    49255
+  xcalls                                                        63333
+  mutex_adenters                                                79756
+  trap                                                          98302
+  pswitch                                                      104947
+  namei                                                        455568
+
+
+
+  canch                                                             2
+  rawch                                                             2
+  sysvfork                                                          2
+  rw_rdfails                                                        4
+  rw_wrfails                                                        6
+  intrblk                                                          11
+  outch                                                            27
+  bwrite                                                           34
+  lwrite                                                          159
+  sysexec                                                         243
+  sysfork                                                         341
+  nthreads                                                        360
+  sema                                                           1547
+  inv_swtch                                                      2467
+  syswrite                                                      16111
+  writech                                                       16111
+  lread                                                         17432
+  sysread                                                       23887
+  readch                                                        23888
+  idlethread                                                    44890
+  mutex_adenters                                                53732
+  xcalls                                                        60517
+  pswitch                                                       95259
+  trap                                                         100536
+  namei                                                        387007
+
+
+
+  bread                                                             1
+  canch                                                             2
+  intrblk                                                           2
+  rawch                                                             2
+  rw_wrfails                                                       10
+  rw_rdfails                                                       11
+  outch                                                            26
+  bwrite                                                           43
+  sysexec                                                         182
+  sysfork                                                         206
+  nthreads                                                        220
+  lwrite                                                          235
+  sema                                                           1502
+  inv_swtch                                                      2712
+  lread                                                          6061
+  syswrite                                                      18313
+  writech                                                       18313
+  readch                                                        27199
+  sysread                                                       27199
+  mutex_adenters                                                56936
+  idlethread                                                    57166
+  xcalls                                                        69253
+  trap                                                          84148
+  namei                                                         93723
+  pswitch                                                      120441
+
+
+  canch                                                             1
+  rawch                                                             1
+  rw_wrfails                                                        4
+  intrblk                                                           5
+  sysvfork                                                          5
+  rw_rdfails                                                       13
+  outch                                                            26
+  bwrite                                                           31
+  lwrite                                                          198
+  sysexec                                                         381
+  sysfork                                                         419
+  nthreads                                                        426
+  sema                                                           1489
+  inv_swtch                                                      2305
+  lread                                                          4343
+  syswrite                                                      16085
+  writech                                                       16085
+  readch                                                        38124
+  sysread                                                       38125
+  idlethread                                                    44142
+  mutex_adenters                                                56638
+  xcalls                                                        60651
+  pswitch                                                       90756
+  namei                                                        108061
+  trap                                                         110193
+
+
+  canch                                                             1
+  rawch                                                             1
+  sysvfork                                                          5
+  intrblk                                                           8
+  rw_rdfails                                                        8
+  rw_wrfails                                                        9
+  bwrite                                                           26
+  outch                                                            26
+  lwrite                                                          137
+  sysexec                                                         254
+  sysfork                                                         293
+  nthreads                                                        304
+  sema                                                           1401
+  inv_swtch                                                      2882
+  lread                                                          9673
+  syswrite                                                      13257
+  writech                                                       13257
+  sysread                                                       39790
+  readch                                                        39791
+  idlethread                                                    47132
+  mutex_adenters                                                61901
+  xcalls                                                        62732
+  pswitch                                                       97469
+  trap                                                         108100
+  namei                                                        217825
+
+
+  canch                                                             1
+  rawch                                                             1
+  rw_wrfails                                                        2
+  rw_rdfails                                                        5
+  intrblk                                                          14
+  outch                                                            26
+  bwrite                                                           48
+  sysexec                                                         200
+  lwrite                                                          222
+  sysfork                                                         257
+  nthreads                                                        258
+  sema                                                           1589
+  inv_swtch                                                      3137
+  lread                                                          9906
+  syswrite                                                      22390
+  writech                                                       22390
+  readch                                                        38453
+  sysread                                                       38453
+  mutex_adenters                                                45320
+  idlethread                                                    53643
+  xcalls                                                        67219
+  trap                                                          97981
+  pswitch                                                      113437
+  namei                                                        187856
+
+
+  canch                                                             1
+  rawch                                                             1
+  rw_rdfails                                                        5
+  rw_wrfails                                                       10
+  intrblk                                                          17
+  outch                                                            25
+  bwrite                                                           26
+  lwrite                                                          210
+  sysexec                                                         256
+  sysfork                                                         281
+  nthreads                                                        282
+  sema                                                           1450
+  inv_swtch                                                      3274
+  lread                                                          3970
+  syswrite                                                      23740
+  writech                                                       23740
+  readch                                                        40741
+  sysread                                                       40741
+  idlethread                                                    55329
+  mutex_adenters                                                58572
+  xcalls                                                        71623
+  namei                                                         81628
+  trap                                                         114817
+  pswitch                                                      117206
+
+
+  canch                                                             1
+  rawch                                                             1
+  rw_wrfails                                                        2
+  rw_rdfails                                                        4
+  intrblk                                                          15
+  outch                                                            25
+  bwrite                                                           39
+  lwrite                                                          126
+  sysexec                                                         185
+  nthreads                                                        230
+  sysfork                                                         230
+  sema                                                           1889
+  inv_swtch                                                      2496
+  lread                                                          4651
+  syswrite                                                      17564
+  writech                                                       17564
+  readch                                                        22158
+  sysread                                                       22158
+  mutex_adenters                                                28866
+  idlethread                                                    49386
+  xcalls                                                        58064
+  namei                                                         66769
+  pswitch                                                      101244
+  trap                                                         101681
+
+
+  canch                                                             1
+  rawch                                                             1
+  intrblk                                                          18
+  outch                                                            25
+  bwrite                                                           37
+  sysexec                                                         146
+  lwrite                                                          197
+  nthreads                                                        206
+  sysfork                                                         206
+  sema                                                            483
+  inv_swtch                                                      2887
+  lread                                                         15274
+  syswrite                                                      28440
+  writech                                                       28440
+  readch                                                        33628
+  sysread                                                       33629
+  idlethread                                                    53115
+  xcalls                                                        62926
+  mutex_adenters                                                71817
+  trap                                                         104140
+  pswitch                                                      109001
+  namei                                                        238082

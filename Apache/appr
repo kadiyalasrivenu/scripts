@@ -1,0 +1,53 @@
+#!/bin/ksh
+#set -vx
+
+export found=0
+export pidwritten=0
+
+if [ -f $APACHE_TOP/Apache/logs/httpds.pid ]
+then
+ ptree `cat $APACHE_TOP/Apache/logs/httpds.pid`|grep -v jdk|awk '{print $1}'|while read pid;do
+  /usr/proc/bin/pfiles $pid 2>/dev/null|grep -i $1|while read line;do
+   if [ $found -eq 0 ] 
+   then
+    echo "***************************************"
+    echo "Regular Apache Processes"
+    echo "***************************************"
+    found=1
+   fi
+   if [ $pidwritten -eq 0 ] 
+   then
+    echo "`ps -o pid,ppid,pgid,user,comm -p $pid`"
+    pidwritten=1
+   fi
+   echo "$line"
+  done
+  pidwritten=0
+ done
+fi
+
+export found=0
+export pidwritten=0
+if [ ! -f $APACHE_TOP/Apache/logs/czhttpds.pid ] 
+then
+ exit 1
+fi
+
+ptree `cat $APACHE_TOP/Apache/logs/czhttpds.pid`|grep -v jdk|awk '{print $1}'|while read pid;do
+ /usr/proc/bin/pfiles $pid 2>/dev/null|grep -i $1|while read line;do
+  if [ $found -eq 0 ] 
+  then
+   echo "***************************************"
+   echo "Dedicated Apache Processes"
+   echo "***************************************"
+   found=1
+  fi
+  if [ $pidwritten -eq 0 ] 
+  then
+   echo "`ps -o pid,ppid,pgid,user,comm -p $pid`"
+   pidwritten=1
+  fi
+  echo "$line"
+ done
+ pidwritten=0
+done

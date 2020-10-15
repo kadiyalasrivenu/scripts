@@ -1,0 +1,151 @@
+
+@sqdt 
+
+define sql_id = '63hcg4r52k7m6'
+
+set long 99999999
+
+col sql_text form a150
+
+select 	sql_text 
+from 	dba_hist_sqltext 
+where 	sql_id = '&sql_id'
+/
+
+@sqpl
+
+SELECT * FROM table(DBMS_XPLAN.DISPLAY_AWR('&sql_id', format=> 'ADVANCED ALLSTATS LAST'))
+/
+
+
+
+*************
+Original SQL
+*************
+
+explain plan for
+
+/
+select 	* from table(dbms_xplan.display(null,null,'advanced'))
+/
+
+
+*************
+Analysis
+*************
+
+
+
+Binds from AWR
+
+col name form a20
+col VALUE_STRING form a50
+
+select 	SNAP_ID, NAME, POSITION, DATATYPE_STRING, VALUE_STRING 
+from 	DBA_HIST_SQLBIND 
+where 	SQL_ID = '&sql_id'
+order 	by 1, 2
+/
+
+
+**************
+Resolution
+**************
+
+
+
+
+************************
+Other SQL on 
+************************
+
+
+col sql_text form a45
+col sql_id head "SQL ID" form a13
+col module head "Module" form a10
+col action head "Action" form a10
+col parse_calls head "Parse|Calls" form 999,999,999
+col Executions  head "Execu|tions" form 9,999,999,999
+col disk_reads head "Disk|Reads" form 999,999,999
+col buffer_gets head "Buffer|Gets" form 999,999,999,999
+col rows_processed head "Rows|Processed" form 9,999,999,999
+
+select 	sql_text, sql_id, module, action, parse_calls, 
+	executions, 
+	disk_reads, buffer_gets, rows_processed
+from 	v$sqlarea
+where 	upper(sql_text) like '%%'
+order 	by 6 desc
+/
+
+
+**********************
+SQL Stats
+**********************
+
+
+define instance = 1
+define sql_id = '33kc6dmc3scxj'
+
+col PLAN_HASH_VALUE head "Plan|Hash value" form 9999999999
+col SQL_PROFILE head "SQL Profile" form a30
+col EXECUTIONS_DELTA head "Execu|tions" form 9,999,999
+col rows_processed head "Rows|Processed|Per Exec" form 999,999,999
+col FETCHES head "Fetch|Calls|Per Exec" form 999,999
+col ELAPSED_TIME head "Elapsed Time|Per Exec|(micro secs)" form 999,999,999,999
+col CPU_TIME_TOTAL head "Total|CPU Time|(micro secs)" form 999,999,999,999
+col CPU_TIME head "CPU Time|Per Exec|(micro secs)" form 999,999,999,999
+col BUFFER_GETS head "Buffer Gets|Per Exec" form 999,999,999,999
+col DISK_READS head "Disk Reads|Per Exec" form 9,999,999
+
+select 	PLAN_HASH_VALUE, 
+	sum(EXECUTIONS_DELTA) EXECUTIONS_DELTA, 
+	sum(ROWS_PROCESSED_DELTA)/decode(sum(EXECUTIONS_DELTA),0,1,sum(EXECUTIONS_DELTA)) rows_processed, 
+	sum(FETCHES_DELTA)/decode(sum(EXECUTIONS_DELTA),0,1,sum(EXECUTIONS_DELTA)) FETCHES, 
+	sum(ELAPSED_TIME_DELTA)/decode(sum(EXECUTIONS_DELTA),0,1,sum(EXECUTIONS_DELTA)) ELAPSED_TIME, 
+	sum(CPU_TIME_DELTA)/decode(sum(EXECUTIONS_DELTA),0,1,sum(EXECUTIONS_DELTA)) CPU_TIME_TOTAL, 
+	sum(BUFFER_GETS_DELTA)/decode(sum(EXECUTIONS_DELTA),0,1,sum(EXECUTIONS_DELTA)) BUFFER_GETS, 
+	sum(DISK_READS_DELTA)/decode(sum(EXECUTIONS_DELTA),0,1,sum(EXECUTIONS_DELTA)) DISK_READS
+from	sys.WRH$_SQLSTAT	dhs,
+	sys.WRM$_SNAPSHOT 	ss
+where 	sql_id = '&sql_id'
+and	ss.snap_id = dhs.snap_id
+and	ss.snap_id = dhs.snap_id
+and	ss.instance_number = &instance
+and	ss.END_INTERVAL_TIME > sysdate - 400
+group	by PLAN_HASH_VALUE
+order	by 5 desc
+/
+
+
+col snap_id form 9999999
+col est head "End Snap Time" form a18
+col PLAN_HASH_VALUE head "Plan|Hash value" form 9999999999
+col SQL_PROFILE head "SQL Profile" form a30
+col EXECUTIONS_DELTA head "Execu|tions" form 9,999,999
+col rows_processed head "Rows|Processed|Per Exec" form 999,999,999
+col FETCHES head "Fetch|Calls|Per Exec" form 999,999
+col ELAPSED_TIME head "Elapsed Time|Per Exec|(micro secs)" form 999,999,999,999
+col CPU_TIME_TOTAL head "Total|CPU Time|(micro secs)" form 999,999,999,999
+col CPU_TIME head "CPU Time|Per Exec|(micro secs)" form 999,999,999,999
+col BUFFER_GETS head "Buffer Gets|Per Exec" form 999,999,999,999
+col DISK_READS head "Disk Reads|Per Exec" form 9,999,999
+
+select 	ss.snap_id, to_char(ss.END_INTERVAL_TIME,'DD-MON-YY HH24:MI') est, PLAN_HASH_VALUE,
+	EXECUTIONS_DELTA, 
+	ROWS_PROCESSED_DELTA/decode(EXECUTIONS_DELTA,0,1,EXECUTIONS_DELTA) rows_processed, 
+	FETCHES_DELTA/decode(EXECUTIONS_DELTA,0,1,EXECUTIONS_DELTA) FETCHES, 
+	ELAPSED_TIME_DELTA/decode(EXECUTIONS_DELTA,0,1,EXECUTIONS_DELTA) ELAPSED_TIME, 
+	CPU_TIME_DELTA CPU_TIME_TOTAL, 
+	CPU_TIME_DELTA/decode(EXECUTIONS_DELTA,0,1,EXECUTIONS_DELTA) CPU_TIME, 
+	BUFFER_GETS_DELTA/decode(EXECUTIONS_DELTA,0,1,EXECUTIONS_DELTA) BUFFER_GETS, 
+	DISK_READS_DELTA/decode(EXECUTIONS_DELTA,0,1,EXECUTIONS_DELTA) DISK_READS
+from	sys.WRH$_SQLSTAT	dhs,
+	sys.WRM$_SNAPSHOT 	ss
+where 	sql_id = '&sql_id'
+and	ss.snap_id = dhs.snap_id
+and	ss.snap_id = dhs.snap_id
+and	ss.instance_number = &instance
+and	ss.END_INTERVAL_TIME > sysdate - 400
+order	by 1 desc
+/

@@ -1,0 +1,39 @@
+**************************************************************************
+
+How to set APPS trace.
+
+Find the apps system profile "Initialization SQL Statement - Custom" (FND_APPS_INIT_SQL)
+set it like this
+
+begin fnd_ctl.fnd_sess_ctl('','','TRUE','TRUE','LOG', 'ALTER SESSION SET EVENTS=''10046 TRACE NAME CONTEXT FOREVER, LEVEL 12''tracefile_identifier=''JAWE01'''); end;
+
+
+
+
+begin fnd_ctl.fnd_sess_ctl('','','TRUE','TRUE','LOG', 'ALTER SESSION SET EVENTS=''10046 TRACE NAME CONTEXT FOREVER, LEVEL 12''tracefile_identifier=''DEMARCO1'''); end;
+
+
+
+**************************************************************************
+
+How to check Apps maintenance mode
+
+select fnd_profile.value('APPS_MAINTENANCE_MODE') from dual;
+
+**************************************************************************
+How to set debugging
+
+Profile Name Pre 11.5.10 CU1 Value 
+FND: Log Enabled FND: Debug Log Enabled Yes 
+FND: Log Module FND: Debug Log Module iby% 
+FND: Log Level FND: Debug Log Level Statement 
+FND: Log Filename for Middle-Tier FND: Debug Log Filename <path>/iby.log 
+
+
+wrapper.bin.parameters=-DAFLOG_ENABLED=TRUE
+wrapper.bin.parameters=-DAFLOG_MODULE=cz%
+wrapper.bin.parameters=-DAFLOG_LEVEL=STATEMENT
+wrapper.bin.parameters=-DAFLOG_FILENAME=/u01/sgconv/app/sgconvcomn/admin/log/cz/cz.log
+
+
+/u01/sgconv/app/sgconvcomn/admin/log/cz

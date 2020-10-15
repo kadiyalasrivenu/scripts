@@ -1,0 +1,1 @@
+https://www.unix.com/shell-programming-and-scripting/163684-sql-plus-coprocess-example-also-saves-query-results-into-shell-variables.html

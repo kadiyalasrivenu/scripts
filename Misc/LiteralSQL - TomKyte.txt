@@ -1,0 +1,168 @@
+
+
+*********************
+To find literal sql
+*********************
+
+drop table t1
+/
+
+create table t1 as select sql_text from v$sqlarea
+/
+
+alter table t1 add sql_text_wo_constants varchar2(4000)
+/
+
+create or replace function 
+remove_constants( p_query in varchar2 ) return varchar2
+as
+    l_query long;
+    l_char  varchar2(1);
+    l_in_quotes boolean default FALSE;
+begin
+    for i in 1 .. length( p_query )
+    loop
+        l_char := substr(p_query,i,1);
+        if ( l_char = '''' and l_in_quotes )
+        then
+            l_in_quotes := FALSE;
+        elsif ( l_char = '''' and NOT l_in_quotes )
+        then
+            l_in_quotes := TRUE;
+            l_query := l_query || '''#';
+        end if;
+        if ( NOT l_in_quotes ) then
+            l_query := l_query || l_char;
+        end if;
+    end loop;
+    l_query := translate( l_query, '0123456789', '@@@@@@@@@@' );
+    for i in 0 .. 8 loop
+        l_query := replace( l_query, lpad('@',10-i,'@'), '@' );
+        l_query := replace( l_query, lpad(' ',10-i,' '), ' ' );
+    end loop;
+    return upper(l_query);
+end;
+/
+
+update t1 set sql_text_wo_constants = remove_constants(sql_text)
+/
+
+commit
+/
+
+col sql_text_wo_constants form a83
+
+spool literals
+
+select sql_text_wo_constants, count(*)
+  from t1
+ group by sql_text_wo_constants
+having count(*) > 5
+ order by 2 desc
+/
+
+spool off
+
+drop table t1
+/
+
+drop function remove_constants
+/
+
+
+
+**************************************
+one more way to get all
+**************************************
+
+create table t1 as 
+select hash_value, sql_text  
+from v$sql
+where executions < 5
+/
+
+spool mum_my_literals.LST
+
+col sqltext form a80 trunc
+
+select hash_value, sql_text sqltext
+from t1
+group by hash_value, sql_text
+order by 2
+/
+
+
+***********************************
+To find memory usage of literal sql
+***********************************
+
+
+drop table t2
+/
+
+create table t2 as select sql_text, SHARABLE_MEM, PERSISTENT_MEM, RUNTIME_MEM from v$sqlarea
+/
+
+alter table t2 add sql_text_wo_constants varchar2(4000)
+/
+
+create or replace function 
+remove_constants( p_query in varchar2 ) return varchar2
+as
+    l_query long;
+    l_char  varchar2(1);
+    l_in_quotes boolean default FALSE;
+begin
+    for i in 1 .. length( p_query )
+    loop
+        l_char := substr(p_query,i,1);
+        if ( l_char = '''' and l_in_quotes )
+        then
+            l_in_quotes := FALSE;
+        elsif ( l_char = '''' and NOT l_in_quotes )
+        then
+            l_in_quotes := TRUE;
+            l_query := l_query || '''#';
+        end if;
+        if ( NOT l_in_quotes ) then
+            l_query := l_query || l_char;
+        end if;
+    end loop;
+    l_query := translate( l_query, '0123456789', '@@@@@@@@@@' );
+    for i in 0 .. 8 loop
+        l_query := replace( l_query, lpad('@',10-i,'@'), '@' );
+        l_query := replace( l_query, lpad(' ',10-i,' '), ' ' );
+    end loop;
+    return upper(l_query);
+end;
+/
+
+update t2 set sql_text_wo_constants = remove_constants(sql_text)
+/
+
+commit
+/
+
+col sql_text_wo_constants form a83
+col ssm head "Sharable|Memory|(KB)" form 999,999
+col spm head "Persistent|Memory|(KB)" form 999,999
+col srm head "Runtime|Memory|(KB)" form 999,999
+
+spool literals_memory
+
+select 	sql_text_wo_constants, sum(SHARABLE_MEM)/1048576 ssm, 
+	sum(PERSISTENT_MEM)/1048576 spm, sum(RUNTIME_MEM)/1048576 srm, count(*)
+from 	t2
+group 	by sql_text_wo_constants
+having 	count(*) > 5
+order 	by ssm+spm+srm desc
+/
+
+spool off
+
+drop table t2
+/
+
+drop function remove_constants
+/
+

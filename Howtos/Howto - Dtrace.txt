@@ -1,0 +1,70 @@
+sudo dtrace -n syscall:::entry'/pid == 17698/{ @syscalls[probefunc] = count(); }'
+
+
+syscall::open:entry
+/pid == 17698/
+{
+	self->path = copyinstr(arg0);
+}
+
+syscall::open:return
+/self->path != NULL && arg1 == -1/
+{
+	printf("open for '%s' failed", self->path);
+	ustack();
+}
+
+sudo dtrace -n 'syscall:::entry /pid == 17698/ { @num[execname] = count(); }'
+ 
+sudo dtrace -n 'syscall:::entry /pid == 17698/  { @num[probefunc] = count(); }'
+
+
+
+BEGIN
+{
+last = timestamp;
+}
+syscall:::entry
+/pid == 17698/
+{
+@func[tid, probefunc, arg0] = count();
+}
+tick-10sec
+{
+trunc(@func, 10);
+normalize(@func, (timestamp - last) / 1000000000);
+printa(@func);
+clear(@func);
+last = timestamp;
+}
+
+*****************
+IO Latency
+*****************
+dtrace -qn 
+   'io:::start /execname=="oracle" && args[0]->b_flags & B_WRITE/ { 
+       io_start[args[0]->b_edev, args[0]->b_blkno] = timestamp; 
+    } 
+    io:::done / (io_start[args[0]->b_edev, args[0]->b_blkno]) && (args[0]->b_flags & B_WRITE) / { 
+       @[args[1]->dev_pathname, args[2]->fi_name] = 
+           quantize((timestamp - io_start[args[0]->b_edev, args[0]->b_blkno]) / 1000000); 
+       io_start[args[0]->b_edev, args[0]->b_blkno] = 0; 
+    } 
+    tick-10s {
+       exit(0)
+    }'
+
+using pid
+
+
+   'io:::start /pid==18087/{ 
+       io_start[args[0]->b_edev, args[0]->b_blkno] = timestamp; 
+    } 
+    io:::done / (io_start[args[0]->b_edev, args[0]->b_blkno]) && (args[0]->b_flags & B_WRITE) / { 
+       @[args[1]->dev_pathname, args[2]->fi_name] = 
+           quantize((timestamp - io_start[args[0]->b_edev, args[0]->b_blkno]) / 1000000); 
+       io_start[args[0]->b_edev, args[0]->b_blkno] = 0; 
+    } 
+    tick-10s {
+       exit(0)
+    }'

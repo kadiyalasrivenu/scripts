@@ -1,0 +1,73 @@
+REM This Script is used to see the executions of a particular SQL statement like this
+
+
+                                                                  Buffer Gets                                                               
+   SNAP_ID Snap Time       HASH_VALUE EXECUTIONS BUFFER_GETS    Per Execution DISK_READS ROWS_PROCESSED                                     
+---------- --------------- ---------- ---------- ----------- ---------------- ---------- --------------                                     
+      6522 13-mar-06 21:00 1829165905          2      410357          205,179        413             88                                     
+
+*************************************************************************************************
+
+col snap_id head "Snap_ID" form 999999
+col snap_time head "Snap Time" form a15
+col hash_value head "Hash Value" form 9999999999
+col executions head "executions" form 9999999999
+col buffer_gets heaad "Buffer Gets" form 99,999,999,999
+col bgce heaad "Buffer Gets|Per Execution" form 9,999,999,999
+col disk_reads heaad "Buffer Gets" form 999,999,999
+col rows_processed heaad "Buffer Gets" form 999,999,999
+
+select 	sq.snap_id,
+	to_char(sn.SNAP_TIME,'dd-mon-yy hh24:mi') snap_time,
+	sq.hash_value,
+	sq.executions,
+	sq.buffer_gets,
+	round(sq.buffer_gets/sq.executions) bgce,
+	sq.disk_reads,
+	sq.rows_processed
+from 	stats$sql_summary sq,
+	stats$snapshot sn
+where	sn.snap_id=sq.snap_id
+and	hash_value in (
+	select 	hash_value 
+	from 	STATS$SQLTEXT 
+	where 	sql_text like '%select distinct to_char( staff_start, ''YYYYMMDDHH24MI'' )%'
+	)
+/
+
+*************************************************************************************************
+
+create table x as
+select 	hash_value 
+from 	STATS$SQLTEXT 
+where 	sql_text like 'select distinct to_char( staff_start, ''YYYYMMDDHH24MI'' )%'
+/
+
+
+col snap_id head "Snap_ID" form 999999
+col snap_time head "Snap Time" form a15
+col hash_value head "Hash Value" form 9999999999
+col executions head "executions" form 9999999999
+col buffer_gets head "Buffer Gets" form 99,999,999,999
+col bgce head "Buffer Gets|Per Execution" form 9,999,999,999
+col disk_reads head "Disk|Reads" form 999,999,999
+col rows_processed head "Rows|Processed" form 999,999,999
+
+select 	sq.snap_id,
+	to_char(sn.SNAP_TIME,'dd-mon-yy hh24:mi') snap_time,
+	sq.hash_value,
+	sq.executions,
+	sq.buffer_gets,
+	round(sq.buffer_gets/sq.executions) bgce,
+	sq.disk_reads,
+	sq.rows_processed
+from 	stats$sql_summary sq,
+	stats$snapshot sn
+where	sn.snap_id=sq.snap_id
+and	exists (
+	select 	1 
+	from 	x 
+	where 	sq.hash_value=x.hash_value
+	)
+order 	by snap_id
+/

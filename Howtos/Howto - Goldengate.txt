@@ -1,0 +1,159 @@
+************************
+Add Goldengate processes
+************************
+
+Add Integrated extract
+
+DELETE EXTRACT EN1EA
+UNREGISTER EXTRACT EN1EA DATABASE
+
+ADD EXTRACT EN1EA INTEGRATED TRANLOG, BEGIN NOW
+
+REGISTER EXTRACT EN1EA, DATABASE
+
+
+Add classic extract
+
+ADD EXTRACT EN7SA, TRANLOG, BEGIN NOW
+ADD EXTTRAIL /db/oggfsmount/TST02/N7/OGG/12.3.0.1.4/trail/sa, EXTRACT EN7SA, MEGABYTES 1024
+START EXTRACT EN7SA
+
+DELETE EXTRACT PN7SCA
+
+ADD EXTRACT PN7SAA, EXTTRAILSOURCE /db/oracle/ogg/DD450/tr/sa
+ADD RMTTRAIL /db/dbfsmount/DTGG01/N7/OGG/DEV05_nv/OGGBD/12.3/trail/sa, EXTRACT PN7SAA, MEGABYTES 1024
+START EXTRACT PN7SAA
+
+
+DELETE REPLICAT RN7SAAA
+ADD REPLICAT RN7SAAA, EXTTRAIL /db/dbfsmount/DTGG01/N7/OGG/DEV05_nv/OGGBD/12.3/trail/sa
+-- ALTER REPLICAT RN1EAAA EXTSEQNO 23, EXTRBA 0
+START REPLICAT RN7SAAA
+
+
+
+************
+Add logging on table
+************
+ADD TRANDATA SCH_RMS13.CHANNELS allcols
+
+************
+Check logging on table
+************
+
+define TABLE_NAME = 'SHIPMENT'
+
+col owner form a15
+col LOG_GROUP_NAME form a30
+col TABLE_NAME form a30
+
+select 	OWNER, LOG_GROUP_NAME, TABLE_NAME, LOG_GROUP_TYPE, ALWAYS, GENERATED
+from 	DBA_LOG_GROUPS 
+where 	TABLE_NAME='&TABLE_NAME'
+/
+
+col COLUMN_NAME form a10
+
+select 	OWNER, LOG_GROUP_NAME, TABLE_NAME, COLUMN_NAME, POSITION, LOGGING_PROPERTY
+from 	dba_log_group_columns 
+where 	TABLE_NAME='&TABLE_NAME'
+/
+
+
+************
+ENCRYPT Password
+************
+ 
+GGSCI (x0319t16) 2> ENCRYPT PASSWORD ENCRYPTKEY DEFAULT
+Password:           <Give the password here> --> It might hang, you might need to press enter
+Using Blowfish encryption with DEFAULT key.
+Encrypted password:  AACAAAAAAAAAAAJAGCQBCDQAKIGCAAUCRCDDPELASDJETACE
+Algorithm used:  BLOWFISH
+
+
+************
+Tracing
+************
+
+send er1cdp trace /tmp/er1cdp.trc
+send er1cdp trace2 /tmp/er1cdp.trc
+
+send er1cdp  trace off
+
+
+************
+logdump
+************
+
+GHDR ON - To view the record header
+DETAIL ON - To add column information
+DETAIL DATA - To add hex and ASCII data values to the column information:
+USERTOKEN ON - To view user tokens
+GGSTOKEN ON - To view automatically generated tokens:
+OPEN - Open a file with the following command:
+
+POS rba - To go to an RBA anywhere in the file:
+POS FIRST - To go to the first record in the file:
+pos rev - to go back
+pos last - to go to last record
+
+FILTER CLEAR - Removing the Current Filter Criteria
+FILTER SHOW - View currently applied filters
+FILTER INCLUDE IOTYPE INSERT - Filter Records by Operation Type: Operation types are Insert, Update, and Delete.
+FILTER INCLUDE ANSINAME catalog.schema.table - Filtering Based on a Table ex - filter filename GG20AP01.SOE.ORDER_ITEMS
+FILTER GGSTOKEN LOGCSN - to show only scn
+
+open /db/dbfsmount/N4OGG/tr/al001733
+GHDR  ON
+DETAIL data
+FILEHEADER detail
+USERTOKEN detail
+HEADERTOKEN detail
+GGSTOKEN detail
+FILEHEADER detail
+POS FIRST
+FILTER INCLUDE FILENAME SCH_SIM.MPS_STAGED_MESSAGE SCH_SIM.STORE_ITEM_STOCK SCH_SIM.RETURN SCH_SIM.RETURN_LINE_ITEM SCH_SIM.TRANSFER SCH_SIM.TRANSFER_LINE_ITEM
+
+FILTER GGSTOKEN LOGCSN 
+
+filter logcsn 10522571393793
+filter ORAROWID AAHbOEACTAACvi3AAB
+
+
+EXECUTE DBMS_LOGMNR.ADD_LOGFILE(LOGFILENAME => '/db/r1/tst/DD310/oraarch/arch_1_22591_982270172.log',  OPTIONS => DBMS_LOGMNR.NEW);
+EXECUTE DBMS_LOGMNR.ADD_LOGFILE(LOGFILENAME => '/db/r1/tst/DD310/oraarch/arch_1_22590_982270172.log',  OPTIONS =>DBMS_LOGMNR.ADDFILE);
+
+EXECUTE DBMS_LOGMNR.START_LOGMNR(OPTIONS => DBMS_LOGMNR.DICT_FROM_ONLINE_CATALOG);
+if you want committed data only and pretty sql
+EXECUTE DBMS_LOGMNR.START_LOGMNR(OPTIONS => DBMS_LOGMNR.DICT_FROM_ONLINE_CATALOG + DBMS_LOGMNR.COMMITTED_DATA_ONLY + DBMS_LOGMNR.PRINT_PRETTY_SQL);
+
+Query the V$LOGMNR_CONTENTS
+
+
+col sql_redo form a40
+col sql_undo form a40
+col table_name form a30
+
+SELECT 	SQL_REDO, SCN, START_SCN, COMMIT_SCN
+FROM 	V$LOGMNR_CONTENTS 
+WHERE 	TABLE_NAME IN ('PARENT_TAB', 'CHILD_TAB', 'STANDALONE_TAB')
+/
+
+
+open /db/ogg/r1/uat/DD310/tr/gs000000000
+GHDR  ON
+DETAIL data
+FILEHEADER detail
+USERTOKEN detail
+HEADERTOKEN detail
+GGSTOKEN detail
+FILEHEADER detail
+POS FIRST
+
+************************
+logdump
+
+Scanning for end of transaction
+SCANFORENDTRANS
+
+

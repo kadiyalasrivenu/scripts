@@ -1,0 +1,119 @@
+
+********************************
+Proton Nordstrom - specific
+********************************
+To get all keys
+
+https://proton.vip.nordstrom.com/api/groups/delightful-tiger/api-keys
+
+To get API Keys use access key from above output in below call
+
+https://proton.vip.nordstrom.com/api/api-keys/delightful-tiger.SSXBXVEF73US0MW
+
+********************************
+kafkacat
+********************************
+
+-- first 100 messages
+
+kafkacat -b meadow.prod.us-west-2.aws.proton.nordstrom.com:9093 \
+  -X security.protocol=sasl_ssl \
+  -X sasl.mechanisms=SCRAM-SHA-512 \
+  -X sasl.username="delightful-tiger.S78BY3SY2UDVUNI" \
+  -X sasl.password="cRCAGNl0NDjTuDuv64iyy5tV7p4mc0pQ2uJfKzs4NiSDlt_tZZeAxlqdXKOndIwpg7W6smY3gNYlac7vrY7GDg5jzPMz1LfGgeO1TRSXjHITufIY6U8AHv9DBLfdYxlb" \
+  -D "\n************\nRecord\n************\n" \
+  -C -t MPEDBA-R1-RMS-TRAN_DATA_HIST \
+  -o beginning -e -c 100
+
+-- last 100 messages
+
+kafkacat -b cove.nonprod.us-west-2.aws.proton.nordstrom.com:9093 \
+  -X security.protocol=sasl_ssl \
+  -X sasl.mechanisms=SCRAM-SHA-512 \
+  -X sasl.username="delightful-tiger.SSXBXVEF73US0MW" \
+  -X sasl.password="seswqDIaI9MfEj_FMWVWUOv_CK7mTcZ4KrctTeJHml6N5x4nVZI-hQvJhBZGDDrxEHcKAXtPpo1C82cyjtQTWK-mG5CbWxN8qufgS_-ocSJx7-jj_ugM0CWdRCDGiloW" \
+  -D "\n************\nRecord\n************\n" \
+  -C -t MPEDBA-TST13-N1-RMS-X-avro \
+  -o -100 -e -c 100
+
+-- like tail -f
+
+kafkacat -b vale.prod.us-west-2.aws.proton.nordstrom.com:9093 \
+  -X security.protocol=sasl_ssl \
+  -X sasl.mechanisms=SCRAM-SHA-512 \
+  -X sasl.username=""delightful-tiger.GP2C048MLDO44C8"" \
+  -X sasl.password="H-7BsUIe8QWCnwjNee0whQ2cnhu96CDb1heiRPntHGzAF2kInK0mFT1h8ddkuUt0Y8UG2JljFd3iZllGgM_JFt6nWeosqpl79LO5qqNQdUfLddp4cZovDtfrzgOxN6uv" \
+  -D "\n************\nRecord\n************\n" \
+  -C -t MPEDBA-N1-RMS-RTV-avro \
+  -o end
+
+
+-- from 1 partition like tail -f 
+
+kafkacat -b brook.nonprod.us-west-2.aws.proton.nordstrom.com:9093 \
+  -X security.protocol=sasl_ssl \
+  -X sasl.mechanisms=SCRAM-SHA-512 \
+  -X sasl.username=""delightful-tiger.ONIBT6KHUI3COS8"" \
+  -X sasl.password="ahirMs4owG_PxxOm4_sqAWYV9j3Q3-SUHYcooeZfyYRitunvZOke4jzHNNoidEgIgjp-MZw4lIrh6lS34BJVgAotrD7JihQ_MC4SZi1zzmgU0P5jO1o-oM3j2bmniuZu" \
+  -D "\n************\nRecord\n************\n" \
+  -C -t MPEDBA-N1-RMS-ILOAD-TRAN_DATA_HIST -p 6\
+  -o end
+  
+-- Consume data after an offset
+example - after 1000 messages
+
+kafkacat -b meadow.prod.us-west-2.aws.proton.nordstrom.com:9093 \
+  -X security.protocol=sasl_ssl \
+  -X sasl.mechanisms=SCRAM-SHA-512 \
+  -X sasl.username="delightful-tiger.S78BY3SY2UDVUNI" \
+  -X sasl.password="cRCAGNl0NDjTuDuv64iyy5tV7p4mc0pQ2uJfKzs4NiSDlt_tZZeAxlqdXKOndIwpg7W6smY3gNYlac7vrY7GDg5jzPMz1LfGgeO1TRSXjHITufIY6U8AHv9DBLfdYxlb" \
+  -D "\n************\nRecord\n************\n" \
+  -C -t MPEDBA-R1-RMS-TRAN_DATA_HIST \
+  -o 1000 -e -c 100
+
+-- Consume avro data
+
+kafkacat -b meadow.prod.us-west-2.aws.proton.nordstrom.com:9093 \
+  -X security.protocol=sasl_ssl \
+  -X sasl.mechanisms=SCRAM-SHA-512 \
+  -X sasl.username="delightful-tiger.S78BY3SY2UDVUNI" \
+  -X sasl.password="cRCAGNl0NDjTuDuv64iyy5tV7p4mc0pQ2uJfKzs4NiSDlt_tZZeAxlqdXKOndIwpg7W6smY3gNYlac7vrY7GDg5jzPMz1LfGgeO1TRSXjHITufIY6U8AHv9DBLfdYxlb" \
+  -D "\n************\nRecord\n************\n" \
+  -C -t MPEDBA-R1-RMS-TRAN_DATA_HIST \
+  -o 1000 -e -c 100
+
+-- Using PEM file on old cluster
+/home/oraclegg/kafkacat -b kafka.prod.proton.r53.nordstrom.net:9093 \
+  -X security.protocol=SSL \
+  -X ssl.ca.location=/home/oraclegg/nordstrom-ca.pem \
+  -C -t SCH_RMS13.ITEM_LOC_SOH \
+  -o -100 -e -c 100
+
+********************************
+Find number of partitions
+********************************
+
+get metadata for topic
+
+kafkacat -b meadow.prod.us-west-2.aws.proton.nordstrom.com:9093 \
+  -X security.protocol=sasl_ssl \
+  -X sasl.mechanisms=SCRAM-SHA-512 \
+  -X sasl.username="delightful-tiger.S78BY3SY2UDVUNI" \
+  -X sasl.password="cRCAGNl0NDjTuDuv64iyy5tV7p4mc0pQ2uJfKzs4NiSDlt_tZZeAxlqdXKOndIwpg7W6smY3gNYlac7vrY7GDg5jzPMz1LfGgeO1TRSXjHITufIY6U8AHv9DBLfdYxlb" \
+  -D "\n************\nRecord\n************\n" \
+  -L -t MPEDBA-N1-RMS-ILOAD-TRAN_DATA_HIST
+
+get offset for a topic
+
+Query options (-Q):  -t <t>:<p>:<ts>
+Get offset for topic <t>,partition <p>, timestamp <ts>.  Timestamp is the number of milliseconds since epoch UTC. Multiple -t .. are allowed but a partition must only occur once.
+
+
+kafkacat -b meadow.prod.us-west-2.aws.proton.nordstrom.com:9093 \
+  -X security.protocol=sasl_ssl \
+  -X sasl.mechanisms=SCRAM-SHA-512 \
+  -X sasl.username="delightful-tiger.S78BY3SY2UDVUNI" \
+  -X sasl.password="cRCAGNl0NDjTuDuv64iyy5tV7p4mc0pQ2uJfKzs4NiSDlt_tZZeAxlqdXKOndIwpg7W6smY3gNYlac7vrY7GDg5jzPMz1LfGgeO1TRSXjHITufIY6U8AHv9DBLfdYxlb" \
+  -D "\n************\nRecord\n************\n" \
+  -Q -t MPEDBA-N1-RMS-ILOAD-TRAN_DATA_HIST:0:1000
+

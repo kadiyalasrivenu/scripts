@@ -1,0 +1,245 @@
+
+/*Modified Brenden Greggs file 
+for server with zones, use this script
+*/
+
+inline int OPT_follow    = 1;
+inline int OPT_printid   = 1;
+inline int OPT_elapsed   = 1;
+inline int OPT_cpu       = 1;
+
+dtrace:::BEGIN
+/ (zonename == "x0319p04") /
+{
+        /* print header */
+        printf("%-9s  ", "PID/LWP") ;
+        printf("%7s ", "ELAPSD") ;
+        printf("%6s ", "CPU") ;
+        printf("SYSCALL(args) \t\t = return\n");
+}
+
+/*
+ * Save syscall entry info
+ */
+syscall:::entry
+/ (zonename == "x0319p04") && ((pid == $target) || progenyof($target)) /
+{
+        /* set start details */
+        self->start = timestamp;
+        self->vstart = vtimestamp;
+        self->arg0 = arg0;
+        self->arg1 = arg1;
+        self->arg2 = arg2;
+
+}
+
+/*
+ * Follow children
+ */
+syscall::fork*:return
+/(zonename == "x0319p04") && progenyof($target) /
+{
+        /* print output */
+        self->code = (errno == 0) ? "" : "Err#";
+        printf("%6d/%d:  ", pid, tid) ;
+        printf("%7d:  ", 0) ;
+        printf("%6d ", 0) ;
+        printf("%s(0x%X, 0x%X, 0x%X)\t\t = %d %s%d\n", probefunc,self->arg0, self->arg1, self->arg2, (int)arg0, self->code,(int)errno);
+}
+
+/*
+ * Print return data
+ */
+
+/*
+ * The following code is written in an intentionally repetative way.
+ * The first versions had no code redundancies, but performed badly during
+ * benchmarking. The priority here is speed, not cleverness. I know there
+ * are many obvious shortcuts to this code, I have tried them. This style has
+ * shown in benchmarks to be the fastest (fewest probes fired, fewest actions).
+ */
+
+/* print 3 args, return as hex */
+syscall::lwp_sigmask:return
+/(zonename == "x0319p04") && self->start/
+{
+        /* calculate elapsed time */
+        this->elapsed = timestamp - self->start;
+        self->start = 0;
+        this->cpu = vtimestamp - self->vstart;
+        self->vstart = 0;
+        self->code = (errno == 0) ? "" : "Err#";
+
+        /* print optional fields */
+        printf("%6d/%d:  ", pid, tid) ;
+        printf("%7d ", this->elapsed/1000) ;
+        printf("%6d ", this->cpu/1000) ;
+
+        /* print main data */
+        printf("%s(0x%X, 0x%X, 0x%X)\t\t = 0x%X %s%d\n", probefunc,(int)self->arg0, self->arg1, self->arg2, (int)arg0,self->code, (int)errno);
+        self->arg0 = 0;
+        self->arg1 = 0;
+        self->arg2 = 0;
+}
+
+/* print 3 args, arg0 as a string */
+syscall::stat*:return,
+syscall::lstat*:return,
+syscall::open*:return,
+syscall::resolvepath:return
+/(zonename == "x0319p04") && self->start/
+{
+        /* calculate elapsed time */
+        this->elapsed = timestamp - self->start;
+        self->start = 0;
+        this->cpu = vtimestamp - self->vstart;
+        self->vstart = 0;
+        self->code = (errno == 0) ? "" : "Err#";
+
+        /* print optional fields */
+        printf("%6d/%d:  ", pid, tid) ;
+        printf("%7d ", this->elapsed/1000) ;
+        printf("%6d ", this->cpu/1000) ;
+
+        /* print main data */
+        printf("%s(\"%S\", 0x%X, 0x%X)\t\t = %d %s%d\n", probefunc,copyinstr(self->arg0), self->arg1, self->arg2, (int)arg0,self->code, (int)errno);
+        self->arg0 = 0;
+        self->arg1 = 0;
+        self->arg2 = 0;
+}
+
+/* print 3 args, arg1 as a string */
+syscall::write:return,
+syscall::pwrite:return,
+syscall::*read*:return
+/(zonename == "x0319p04") && self->start/
+{
+        /* calculate elapsed time */
+        this->elapsed = timestamp - self->start;
+        self->start = 0;
+        this->cpu = vtimestamp - self->vstart;
+        self->vstart = 0;
+        self->code = errno == 0 ? "" : "Err#";
+
+        /* print optional fields */
+        printf("%6d/%d:  ", pid, tid) ;
+        printf("%7d ", this->elapsed/1000) ;
+        printf("%6d ", this->cpu/1000) ;
+
+        /* print main data */
+        printf("%s(0x%X, \"%S\", 0x%X)\t\t = %d %s%d\n", probefunc, self->arg0,stringof(copyin(self->arg1, self->arg2)), self->arg2, (int)arg0,self->code, (int)errno);
+        self->arg0 = 0;
+        self->arg1 = 0;
+        self->arg2 = 0;
+}
+
+/* print 0 arg output */
+syscall::gtime:return,
+syscall::*fork*:return
+/(zonename == "x0319p04") && self->start/
+{
+        /* calculate elapsed time */
+        this->elapsed = timestamp - self->start;
+        self->start = 0;
+        this->cpu = vtimestamp - self->vstart;
+        self->vstart = 0;
+        self->code = errno == 0 ? "" : "Err#";
+
+        /* print optional fields */
+        printf("%6d/%d:  ", pid, tid) ;
+        printf("%7d ", this->elapsed/1000) ;
+        printf("%6d ", this->cpu/1000) ;
+
+        /* print main data */
+        printf("%s()\t\t = %d %s%d\n", probefunc,(int)arg0, self->code, (int)errno);
+        self->arg0 = 0;
+        self->arg1 = 0;
+        self->arg2 = 0;
+}
+
+/* print 1 arg output */
+syscall::brk:return,
+syscall::times:return,
+syscall::stime:return,
+syscall::close:return
+/(zonename == "x0319p04") && self->start/
+{
+        /* calculate elapsed time */
+        this->elapsed = timestamp - self->start;
+        self->start = 0;
+        this->cpu = vtimestamp - self->vstart;
+        self->vstart = 0;
+        self->code = errno == 0 ? "" : "Err#";
+
+        /* print optional fields */
+        printf("%6d/%d:  ", pid, tid) ;
+        printf("%7d ", this->elapsed/1000) ;
+        printf("%6d ", this->cpu/1000) ;
+
+        /* print main data */
+        printf("%s(0x%X)\t\t = %d %s%d\n", probefunc, self->arg0,(int)arg0, self->code, (int)errno);
+        self->arg0 = 0;
+        self->arg1 = 0;
+        self->arg2 = 0;
+}
+
+/* print 2 arg output */
+syscall::utime:return,
+syscall::munmap:return
+/(zonename == "x0319p04") && self->start/
+{
+        /* calculate elapsed time */
+        this->elapsed = timestamp - self->start;
+        self->start = 0;
+        this->cpu = vtimestamp - self->vstart;
+        self->vstart = 0;
+        self->code = errno == 0 ? "" : "Err#";
+
+        /* print optional fields */
+        printf("%6d/%d:  ", pid, tid) ;
+        printf("%7d ", this->elapsed/1000) ;
+        printf("%6d ", this->cpu/1000) ;
+
+        /* print main data */
+        printf("%s(0x%X, 0x%X)\t\t = %d %s%d\n", probefunc, self->arg0,self->arg1, (int)arg0, self->code, (int)errno);
+        self->arg0 = 0;
+        self->arg1 = 0;
+        self->arg2 = 0;
+}
+
+/* print 3 arg output - default */
+syscall:::return
+/(zonename == "x0319p04") && self->start/
+{
+        /* calculate elapsed time */
+        this->elapsed = timestamp - self->start;
+        self->start = 0;
+        this->cpu = vtimestamp - self->vstart;
+        self->vstart = 0;
+        self->code = errno == 0 ? "" : "Err#";
+
+        /* print optional fields */
+        printf("%6d/%d:  ", pid, tid) ;
+        printf("%7d ", this->elapsed/1000) ;
+        printf("%6d ", this->cpu/1000) ;
+
+        /* print main data */
+        printf("%s(0x%X, 0x%X, 0x%X)\t\t = %d %s%d\n", probefunc, self->arg0,self->arg1, self->arg2, (int)arg0, self->code, (int)errno);
+        self->arg0 = 0;
+        self->arg1 = 0;
+        self->arg2 = 0;
+}
+
+/* program exited */
+proc:::exit
+/(zonename == "x0319p04") && pid == $target/
+{
+        exit(0);
+}
+
+/* print counts */
+dtrace:::END
+/(zonename == "x0319p04")/
+{
+
+}

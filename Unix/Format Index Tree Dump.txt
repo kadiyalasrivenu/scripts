@@ -1,0 +1,33 @@
+
+
+awk '/begin tree dump/,/end tree dump/' aisgsm2_ora_7377.trc|grep -v "tree dump"|
+awk '{print $1, $3, $4, $6, $8}' |
+while read type fileblockno lno nrow rrow
+do
+if [ "$type" = "branch:" ]
+then 
+lno=`echo $lno|tr -d "("|tr -d ":"`
+nrow=`echo $nrow|tr -d ","`
+rrow=`echo $rrow|tr -d ")"`
+print "select '$type' typ, '$lno' bno, dbms_utility.data_block_address_file($fileblockno) Fileid, dbms_utility.data_block_address_block($fileblockno) Blockid, '$nrow' nleaf, '$rrow' blevel from dual;"
+else
+lno=`echo $lno|tr -d "("|tr -d ":"`
+rrow=`echo $rrow|tr -d ")"`
+print "select '$type' typ, '$lno' lno, dbms_utility.data_block_address_file($fileblockno) Fileid, dbms_utility.data_block_address_block($fileblockno) Blockid, '$nrow' nrow, '$rrow' rrow from dual;"
+fi
+done>x.trc
+
+
+
+set head off
+set feedback 0
+col typ form a10
+col Fileid form -9999999999
+col Blockid form -9999999999
+col bno form a10
+col nleaf form a10
+col blevel form a10
+col lno form a10
+col nrow form a10
+col rrow form a10
+@x.trc

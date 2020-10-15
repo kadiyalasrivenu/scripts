@@ -1,0 +1,15 @@
+How to run hprof
+
+java -Xrunhprof:file=x.prof test1
+
+how to get hprof help
+
+java -Xrunhprof:help
+
+
+*********************
+how to set PATH & CLASSPATH
+
+set PATH=%PATH%;C:\Oracle\product\10.2.0\db_1\jdk\bin;
+
+set CLASSPATH=C:\Oracle\product\10.2.0\db_1\jdbc\lib\ojdbc14.jar;c:\

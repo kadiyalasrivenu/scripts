@@ -1,0 +1,95 @@
+
+******************************************************************************************************************
+Case 1 - Trace I/O
+******************************************************************************************************************
+
+# prex -k
+Type "help" for help ...
+prex> buffer alloc
+Buffer of size 393216 bytes allocated
+prex> enable io
+prex> trace io
+prex> ktrace on
+
+
+prex> ktrace off
+In the other window I extracted the data and dumped it to take a look.
+# mkdir /tmp/tnf
+# cd /tmp/tnf
+# tnfxtract io.tnf
+# tnfdump io.tnf | more
+
+******************************************************************************************************************
+Case 2 - Trace a particular process
+******************************************************************************************************************
+
+
+buffer alloc 2m
+enable io
+trace io
+pfilter on
+pfilter add <pid> -- example if you want to trace process 1234 it is pfilter add 1234
+ktrace on
+------ Wait till work is done
+ktrace off
+
+cd /tmp/tnf
+tnfxtract io.tnf
+tnfdump io.tnf >tnfdump.txt
+******************************************************************************************************************
+Description
+******************************************************************************************************************
+
+Obtaining an I/O trace
+The command sequence is quite simple. 
+The commands must be run as root, and a directory is needed to hold the output. 
+I find it easiest to have two windows open. 
+One to run prex, and the other to go through a cycle of extract, dump, and viewing the data as required. 
+The command sequence for prex is to first allocate a buffer (the default is 384 kilobytes -- you can make it bigger), 
+enable the "io" group of probes, make them trace accesses, 
+then turn on the global flag that enables all kernel tracing. 
+
+
+# prex -k
+Type "help" for help ...
+prex> buffer alloc
+Buffer of size 393216 bytes allocated
+prex> enable io
+prex> trace io
+prex> ktrace on
+
+Now wait a while or run the program you want to trace. 
+In this case I ran iostat -x 10 in another window, didn't try to cause any activity, 
+and waited for some slow service time to appear. After a minute or so I stopped collecting. 
+
+
+prex> ktrace off
+In the other window I extracted the data and dumped it to take a look.
+# mkdir /tmp/tnf
+# cd /tmp/tnf
+# tnfxtract io.tnf
+# tnfdump io.tnf | more
+
+The first section identifies the three probes that were enabled because they have the key "io." 
+The "strategy" probe records an I/O being issued, and "biodone" records an I/O completing. 
+The other mechanism that may cause I/O is the pageout scanner, and this is also being probed. 
+The location of the probe in the Solaris source code is printed for kernel developers to refer to. 
+
+
+probe    tnf_name: "strategy" tnf_string: "keys io blockio;file ../../common/os/driver.c;line 358;"
+probe    tnf_name: "pageout" tnf_string: "keys vm pageio io;file ../../common/vm/vm_pvn.c;line 511;"
+probe    tnf_name: "biodone" tnf_string: "keys io blockio;file ../../common/os/bio.c;line 935;"
+
+The next section is a table of probe events in time order. 
+Where a user process was scheduling the I/O, its PID is recorded. 
+Events caused by interrupts or kernel activity are recorded as PID 0. 
+This trace was measured on a dual-CPU SPARCstation 10, so you can see a mixture of CPU 0 and CPU 2. 
+I've listed the first few records then skipped through looking for something interesting. 
+
+
+
+Elapsed (ms)	Delta (ms)	PID	LWPID	   TID		CPU	Probe Name	Data/Description . . .
+
+    0.000000	  0.000000	632	  1	0xf61a1d80	 0 	 strategy 	device: 8388632 block: 795344 size: 8192 buf: 0xf5afdb40 flags: 9	
+  108.450000 	108.450000	  0	  0	0xfbf6aec0	 2	 biodone 	device: 8388632 block: 795344 buf: 0xf5afdb40 
+

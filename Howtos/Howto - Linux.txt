@@ -1,0 +1,105 @@
+
+********************************
+using strace
+
+strace -p - for tracing a process
+strace -c - for getting count
+strace -s 10 to limit string output to 10 chars
+strace -tt - the time printed will include the microseconds.
+strace -T - Show the time spent in system calls. Time difference between the beginning and the end of each system call.
+strace -r - Print a relative timestamp upon entry to each system call.
+strace -f - Trace child processes as they are created by currently traced processes
+strace -y - Print paths associated with file descriptor arguments.
+
+examples
+strace -ttT -fyp 20965
+strace -s 10 -rTfyp 
+
+to trace specific system calls use -e trace=
+ex to trace open,read,write system calls use -e trace=open,read,write 
+
+strace -e trace=read,write -ttT -fyp 20965
+
+********************************
+If you dont get much info from strace use perf
+
+ex - to check process 1234
+perf top -p 1234
+
+You can even run it in record mode
+ex - perf record -g -p 1234
+...after some time: ^C, then 
+perf report
+
+********************************
+To view processes in tree format
+
+ps -f -A -H
+
+ps -x --forest
+
+********************************
+
+using rpm
+
+How to check what package a file belongs to
+rpm -qf /usr/sbin/ocfs2console
+
+How to list files in a package
+rpm -ql ocfs2console-1.2.7-1.el4
+
+********************************
+
+how to see bios and serverinfo
+/usr/sbin/dmidecode
+
+********************************
+iostat -dmxz 5
+
+********************************
+To see context switches for a process
+
+ex - pid 15264
+watch -d -n 1 'cat /proc/15264/status | grep ctxt_switches'
+
+********************************
+Find processes with high oom score
+
+#!/bin/bash
+for procdir in $(find /proc -maxdepth 1 -regex '/proc/[0-9]+'); do
+  printf "%10d %6d %s\n" \
+    "$(cat $procdir/oom_score)" \
+    "$(basename $procdir)" \
+    "$(cat $procdir/cmdline | tr '\0' ' ' | head -c 100)"
+done 2>/dev/null | sort -nr | head -n 20
+
+********************************
+To see if a file contains code
+ex - JOXSHM file
+
+objdump -b binary -m i386 -D /dev/shm/JOXSHM_EXT_343_mes01pc1_327516169 | head -30
+
+**************************
+Use mobaxterm
+
+installed this on both nodes - atx6db01 & atx6db02
+yum install xorg-x11-server-utils
+
+login as skadiyala
+
+xhost +
+
+xauth list
+
+login as grid
+
+Create the /.Xauthority file if it does not exist
+
+touch /home/grid/.Xauthority
+
+Add these using xuath
+
+xauth add atx6db01.prd.atx.mesinternal.com:11 MIT-MAGIC-COOKIE-1 6aba15a5b11a7a627ef963c495793bef
+xauth add atx6db01.prd.atx.mesinternal.com:12 MIT-MAGIC-COOKIE-1 594bd55e1ca462b9d76d458f740e9b82
+xauth add atx6db01.prd.atx.mesinternal.com:10 MIT-MAGIC-COOKIE-1 067396a7112895ef8b6ece754a9c86f1
+xauth add atx6db01/unix:10 MIT-MAGIC-COOKIE-1 1f8af223633eee4b7c6ae88da0b40733

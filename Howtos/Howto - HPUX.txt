@@ -1,0 +1,116 @@
+HP UX 
+
+*****************************
+
+trace a process
+tusc -T "%T" -p 19360
+tusc -T "" -p 19360
+tusc -T "hires" -p 19360
+
+
+*****************************
+How to set XPG4 environment for ps -o to work
+
+
+export UNIX95="1"
+
+ps -efl -o pid,comm,cls,pri,nice|egrep "PID|pmon"
+
+ps -e -o state,uid,pid,ppid,cls,sz,vsz,wchan,stime,tty,comm
+
+or you can also use this
+
+UNIX95=1 ps -e -o vsz,pid,ppid,user,args
+
+*****************************
+
+see full command line
+
+ps -x -e
+
+
+*****************************
+How to change a process to Real time scheduling
+
+rtsched -s SCHED_RR -p 30 -P 3377
+
+How to change a process to timeshare scheduling
+
+rtsched -s SCHED_NOAGE -p 178 -P 7575
+
+**********************************************************
+
+How to get the times of syscalls from the os tusc trace
+Trace the os process 
+
+tusc -T "" -p >x.txt
+
+cat x.txt|
+awk '
+BEGIN 	{
+	 	prevtime=0;
+		prevline="0 start"
+	}
+	{
+		currline=$0;
+		currtime=$1;
+		$0=prevline;
+		prevtime=$1;
+		$1=(currtime-prevtime)*1000;
+		print;
+		prevline=currline
+	}
+	'
+
+
+*****************************
+How to sum up cpu usage 
+
+UNIX95=1  ps -e -o time,comm|
+        awk '
+        BEGIN   {
+                secs=0
+                }
+        {
+                split($1,a,":");
+                secs=a[1]*60*60+a[2]*60+a[3];
+                if ( secs != 0 )
+                {
+                        print $2,secs
+                }
+                secs=0
+        }
+        '|
+        sort|
+        awk '
+        BEGIN   {
+                first=1
+        }
+        {
+                if (first==1) {
+                        prev=$1;
+                        sum=$2;
+                        first=0
+                }
+                else    {
+                        if ($1==prev) {
+                                sum+=$2
+                        }
+                        else    {
+                                printf "%30s \t %8.0f \n", prev, sum;
+                                prev=$1;
+                                sum=$2
+                        }
+                }
+        }
+        END     {
+                printf "%30s \t %8.0f \n", prev, sum;
+        }
+        '|
+        sort -n -k 2
+
+*****************************
+sar
+
+sar -b -c -d -R -H -L -q 60 400 
+nohup sar -b -c -d -R -H -L -q 60 400 >/tmp/sar20160115.out 2>&1 &

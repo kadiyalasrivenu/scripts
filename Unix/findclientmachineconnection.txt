@@ -1,0 +1,23 @@
+#set -vx
+# Script by SRIVENU KADIYALA - mail - srivenu@hotmail.com
+# This script is a kind of lsof which tells which process have opened a connection with a specified client machine
+
+
+if [ "$#" -lt 2 ]; then
+ echo "Usage $0 <processtogrep> <clientmachineip>"
+ exit 1
+fi
+
+echo "*-*-*-*-* You Should be running this script as root *-*-*-*-*"
+echo "*-*-*-*-* Note - As a normal user you may not see all processes *-*-*-*-*"
+
+ps -e -o pid|grep -v "$1"|while read process;do
+count=`eval /usr/proc/bin/pfiles $process 2>/dev/null|grep "$2"|wc -l `
+if [ "$count" -ne 0 ]
+then
+echo "Process $process"
+ps -f -p $process
+/usr/proc/bin/pfiles $process 2>&1|grep "$2"
+echo " "
+fi
+done

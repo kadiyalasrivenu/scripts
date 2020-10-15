@@ -1,0 +1,28 @@
+How to uncompress a .chm file
+
+example to uncompress a x.chm file
+
+hh.exe -decompile x x.chm
+
+***************************************
+
+How to see an association for a file extension
+
+ex - assoc .sis
+
+How to remove an association
+
+assoc .sis=
+
+***********************************************
+
+How to increase IE timeout
+
+- type regedt32 in cmd window 
+HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\'Internet Settings'
+- Look for the DWORD value ReceiveTimeout in the right-hand pane.
+-If it does not exist click right on the right-hand pane and choose: new > DWORD Value in the pop-up menu. 
+Name the value ReceiveTimeout
+- Double-click on ReceiveTimeout value, and in the resulting dialog, check the decimal radio button.
+- Enter a value in the value box equal to the desired timeout in milliseconds. 
+For example, 20 minutes would be 1200000 (<20*60>*1000).

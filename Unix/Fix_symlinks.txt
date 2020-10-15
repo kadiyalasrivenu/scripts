@@ -1,0 +1,5 @@
+find . -type l -exec ls -l {} \;|grep fndcpesr|grep -v grep|awk '{print $9}'|while read line
+do
+rm $line;
+ln -s ../../../fnd/11.5.0/bin/fndcpesr $line;
+done

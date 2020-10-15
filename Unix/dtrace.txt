@@ -1,0 +1,6 @@
+#!/usr/sbin/dtrace -s
+syscall::pollsys:entry
+/ pid == $1 /  {
+    /* print at most 50 frames */
+    jstack(50);
+}

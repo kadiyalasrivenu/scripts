@@ -1,0 +1,2 @@
+In jserv.properties set
+wrapper.bin.parameters=-verbosegc 

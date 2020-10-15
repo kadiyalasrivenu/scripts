@@ -1,0 +1,100 @@
+-- create directory and varchar2 array
+col value new_value user_dump_directory;
+
+select value from v$parameter where name = 'user_dump_dest';
+
+create or replace directory user_dump_dir as '&user_dump_directory';
+
+create or replace type varchar2_array as table of varchar2(4000);
+/
+
+-- create get_trace_file1 function
+create or replace function get_trace_file1(s_id number default userenv('sid'))
+return varchar2_array
+pipelined
+as
+  v_handle  utl_file.file_type;
+  v_filename  varchar2(2000);
+  v_line      varchar2(4000);
+begin
+  -- get exact file_name
+  select i.value||'_ora_'||p.spid||decode(t.value,null,'','_'||t.value)||'.trc' into v_filename
+  from v$process p, v$session s,
+    (select value from v$parameter where name = 'instance_name') i,
+    (select value from v$parameter where name = 'tracefile_identifier') t
+  where p.addr = s.paddr
+        and s.sid = s_id
+  ;
+
+  v_handle := utl_file.fopen('USER_DUMP_DIR', v_filename, 'R', 32767);
+
+  loop
+    begin
+      utl_file.get_line(v_handle, v_line);
+    exception when no_data_found then
+      exit;
+    end;
+
+    pipe row(v_line);
+  end loop;
+    utl_file.fclose(v_handle);
+    
+  return;
+end;
+/
+
+-- create get_trace_file2 function
+create or replace function get_trace_file2(file_name in varchar2)
+return varchar2_array
+pipelined
+as
+  v_handle  utl_file.file_type;
+  v_line      varchar2(20000);
+begin
+
+  v_handle := utl_file.fopen('USER_DUMP_DIR', file_name, 'R', 32767);
+
+  loop
+    begin
+      utl_file.get_line(v_handle, v_line);
+    exception when no_data_found then
+      exit;
+    end;
+
+    pipe row(v_line);
+  end loop;
+
+    utl_file.fclose(v_handle);
+    
+  return;
+end;
+/
+
+
+-- create get_trace_file3 function
+create or replace function get_trace_file3(dir_name in varchar2, file_name in varchar2)
+return varchar2_array
+pipelined
+as
+  v_handle  utl_file.file_type;
+  v_line      varchar2(20000);
+begin
+
+  v_handle := utl_file.fopen(dir_name, file_name, 'R', 32767);
+
+  loop
+    begin
+      utl_file.get_line(v_handle, v_line);
+    exception when no_data_found then
+      exit;
+    end;
+
+    pipe row(v_line);
+  end loop;
+
+    utl_file.fclose(v_handle);
+    
+  return;
+end;
+/
+
