@@ -1,0 +1,10 @@
+How to mount Windows directory onto a linux container
+
+for ex - to mount the windows directory C:\Srivenu\Drive\Books\Airflow to a container running ubuntu, run this
+
+docker run -v c:/Srivenu/Drive/Books/Airflow:/data ubuntu ls -R /data
+
+On windows /var/lib/docker is mounted on the persistent Virtual Disk of the VM which is under C:\Users\Public\Documents\Hyper-V\Virtual hard disks
+
+To change settings, Stop docker etc
+Type “Hyper-V Manager” in task-bar search box and run it.
